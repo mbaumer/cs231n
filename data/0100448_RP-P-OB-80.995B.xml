@@ -1,0 +1,30 @@
+<record>
+	<header>
+		<identifier>oai:rijksmuseum.nl/collection:RP-P-OB-80.995B</identifier>
+		<datestamp>2012-10-26T15:40:36Z</datestamp>
+	</header>
+	<metadata>
+		<oai_dc:dc>
+			<dc:format>https://www.rijksmuseum.nl/assetimage2.jsp?id=RP-P-OB-80.995B</dc:format>
+			<dc:format>https://www.rijksmuseum.nl/nl/collectie/RP-P-OB-80.995B</dc:format>
+			<dc:identifier>RP-P-OB-80.995B</dc:identifier>
+			<dc:identifier>RM0001.COLLECT.457704</dc:identifier>
+			<dc:language>Dutch</dc:language>
+			<dc:publisher>Rijksmuseum</dc:publisher>
+			<dc:rights>http://creativecommons.org/publicdomain/zero/1.0/</dc:rights>
+			<dc:date>1622 -  1622</dc:date>
+			<dc:description>Mislukt beleg van Bergen op Zoom door het Spaanse leger onder Spinola en Velasco, 18 juli - 3 oktober 1622. Zie ook de bijbehorende prent.</dc:description>
+			<dc:format>blad: hoogte 158 MMmmmm</dc:format>
+			<dc:format>blad: breedte 370 MMmmmm</dc:format>
+			<dc:format>materiaal: papier</dc:format>
+			<dc:format>techniek: boekdruk</dc:format>
+			<dc:creator>vermeld op object uitgever: Geilkercken, Nicolaes van</dc:creator>
+			<dc:coverage>Leiden</dc:coverage>
+			<dc:type>tekstblad</dc:type>
+			<dc:type>nieuwsprent</dc:type>
+			<dc:title>Beleg van Bergen op Zoom, 1622  ()</dc:title>
+			<dc:title>Belegheringhe van Bergen op Zoom / ondert beleyt van den Markies Spinola ende Don Lowijs de Valasco / Anno 1622. in Julij  (titel op object)</dc:title>
+			<dc:coverage>eerste kwart 17e eeuw</dc:coverage>
+		</oai_dc:dc>
+	</metadata>
+</record>
