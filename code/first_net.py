@@ -1,3 +1,4 @@
+from __future__ import division
 '''
 Transfer learning from VGG16
 See https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3 for more info
@@ -104,12 +105,9 @@ y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 
 print y_train[0:5,:]
 
-
-sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
-model.compile(loss='categorical_crossentropy', optimizer=sgd)
+model.compile(loss='categorical_crossentropy', optimizer=Adam())
 
 print "Model has compiled."
-# model.compile(loss='categorical_crossentropy', optimizer=Adam)
 model.fit(X_train, y_train, batch_size=32, nb_epoch=10, verbose=1)
 
 print "Train Accuracy"
