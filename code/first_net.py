@@ -107,10 +107,15 @@ print y_train[0:5,:]
 
 sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(loss='categorical_crossentropy', optimizer=sgd)
+
+print "Model has compiled."
 # model.compile(loss='categorical_crossentropy', optimizer=Adam)
-model.fit(X_train[:50,:,:,:], y_train[:50,:], batch_size=32, nb_epoch=10, verbose=1)
+model.fit(X_train, y_train, batch_size=32, nb_epoch=10, verbose=1)
 
-predictions = model.predict(X_train[:50,:,:,:], batch_size=32, verbose=1)
-# test_predictions = model.predict(X_test,batch_size=16,verbose=1)
-np.sum(np.argmax(predictions,axis=1) == np.argmax(y_train[:50,:],axis=1))
+print "Train Accuracy"
+train_predictions = model.predict(X_train, batch_size=32, verbose=1)
+print np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
 
+print "Test Accuracy"
+test_predictions = model.predict(X_test,batch_size=32,verbose=1)
+print np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
