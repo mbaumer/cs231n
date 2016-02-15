@@ -22,7 +22,7 @@ matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
 
-weights_path = '/home/ubuntu/cs231n/data/vgg16_weights.h5'
+weights_path = '/data/vgg16_weights.h5'
 img_width, img_height = 128, 128
 
 # build the VGG16 network with our input_img as input
@@ -102,8 +102,8 @@ model.add(Dense(3))
 model.add(Activation('softmax'))
 
 
-X = np.load('/home/ubuntu/cs231n/data/X.npy').astype('float32')
-y = np.load('/home/ubuntu/cs231n/data/Y.npy').astype('float32')
+X = np.load('/data/X.npy').astype('float32')
+y = np.load('/data/Y.npy').astype('float32')
 X -= np.mean(X,axis=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
@@ -134,7 +134,7 @@ class CrossValidator(object):
 			# model.compile(loss='categorical_crossentropy', optimizer=Adam)
 			batch_history = LossHistory()
 			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=10, verbose=1,callbacks=[batch_history], validation_split=0.2)
-		    if i == 0: 
+		    if i == 0:
 		    self.best_model = model
 		    	self.best_val_loss = epoch_history.history['val_loss'][-1]
 		    else:
