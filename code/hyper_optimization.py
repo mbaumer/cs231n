@@ -12,6 +12,7 @@ from keras.models import Sequential
 from keras.optimizers import SGD, Adam
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
+from keras.regularizers import l2
 from keras.callbacks import Callback
 
 from sklearn.cross_validation import train_test_split
@@ -89,9 +90,9 @@ for layer in model.layers:
 
 model.add(Flatten())
 # Note: Keras does automatic shape inference.
-model.add(Dense(256))
+model.add(Dense(256,name='dense_1'))
 model.add(Activation('relu'))
-model.add(Dropout(0.5))
+model.add(Dropout(0.5,name='dropout_1'))
 # model.add(Dense(256))
 # model.add(Activation('relu'))
 #model.add(Dropout(0.5))
@@ -125,17 +126,25 @@ class CrossValidator(object):
 	def run(self,n_trials):
 		for i in range(n_trials):
 			learning_rate = 10**np.random.uniform(-5,-2,1)
+			#dropout_prob = np.random.uniform(.5,.95,1)
+			#dense_regularization = 10**np.random.uniform(-6,-2,1)
+			#model.layers['dropout_1'].p = dropout_prob[0]
+			#model.layers['dense_1'].W_regularizer = l2(dense_regularization[0])
 			print 'running crossval trial', i, 'learning rate is', learning_rate
 			adam = Adam(lr=learning_rate[0], beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 			model.compile(loss='categorical_crossentropy', optimizer=adam)
 			print "Model has compiled."
 
 			batch_history = LossHistory()
-			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=10, verbose=1, show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
+			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=3, verbose=1, show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
+			print 'last epoch val loss for this iteration is', epoch_history.history['val_loss'][-1], 'current best is', self.best_val_loss
+			print 'last val acc is', epoch_history.history['val_acc'][-1]
 			if i == 0:
+				print 'first iteration; saving model'
 				self.best_model = model
 				self.best_val_loss = epoch_history.history['val_loss'][-1]
 			elif epoch_history.history['val_loss'][-1] < self.best_val_loss:
+				print 'I think this current model is better: Im saving it.'
 				self.best_model = model
 				self.best_val_loss = epoch_history.history['val_loss'][-1]
 
@@ -155,15 +164,15 @@ class CrossValidator(object):
 		ax1.set_xlabel('Batch Number')
 		ax1.set_ylabel('Training Loss')
 		for history in self.batch_histories:
-			plt.plot(history)
-		plt.savefig('training_losses.png')
+			ax1.plot(history)
+		fig1.savefig('training_losses.png')
 
 		fig2,ax2 = plt.figure()
 		ax2.set_xlabel('Epoch Number')
 		ax2.set_ylabel('Validation Loss')
 		for history in self.epoch_histories:
-			plt.plot(history)
-		plt.savefig('validation_losses.png')
+			ax2.plot(history)
+		fig2.savefig('validation_losses.png')
 
 solver = CrossValidator()
 solver.run(5)
