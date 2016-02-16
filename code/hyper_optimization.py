@@ -127,19 +127,19 @@ class CrossValidator(object):
 	def run(self,n_trials):
 		for i in range(n_trials):
 			learning_rate = 10**np.random.uniform(-5,-2,1)
-			dropout_prob = np.random.uniform(.5,.95,1)
-			dense_regularization = 10**np.random.uniform(-6,-2,1)
-			model.layers['dropout_1'].p = dropout_prob[0]
-			model.layers['dense_1'].W_regularizer = l2(dense_regularization[0])
+			# dropout_prob = np.random.uniform(.5,.95,1)
+			# dense_regularization = 10**np.random.uniform(-6,-2,1)
+			# model.layers['dropout_1'].p = dropout_prob[0]
+			# model.layers['dense_1'].W_regularizer = l2(dense_regularization[0])
 			print 'running crossval trial', i, 'learning rate is', learning_rate
-			print 'dropout prob is', dropout_prob
-			print 'regularization strength is', dense_regularization
+			# print 'dropout prob is', dropout_prob
+			# print 'regularization strength is', dense_regularization
 			adam = Adam(lr=learning_rate[0], beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 			model.compile(loss='categorical_crossentropy', optimizer=adam)
 			print "Model has compiled."
 
 			batch_history = LossHistory()
-			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=3, verbose=1, show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
+			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=20, verbose=1, show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
 			print 'last epoch val loss for this iteration is', epoch_history.history['val_loss'][-1], 'current best is', self.best_val_loss
 			print 'last val acc is', epoch_history.history['val_acc'][-1]
 			if i == 0:
@@ -178,7 +178,7 @@ class CrossValidator(object):
 		plt.savefig('validation_losses.png')
 
 solver = CrossValidator()
-solver.run(5)
+solver.run(20)
 print 'best model has learning rate of', str(solver.best_model.optimizer.lr)
 train_predictions = solver.best_model.predict(X_train, batch_size=32, verbose=1)
 print 'training accuracy is', np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
