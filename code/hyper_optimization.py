@@ -127,11 +127,13 @@ class CrossValidator(object):
 	def run(self,n_trials):
 		for i in range(n_trials):
 			learning_rate = 10**np.random.uniform(-5,-2,1)
-			#dropout_prob = np.random.uniform(.5,.95,1)
-			#dense_regularization = 10**np.random.uniform(-6,-2,1)
-			#model.layers['dropout_1'].p = dropout_prob[0]
-			#model.layers['dense_1'].W_regularizer = l2(dense_regularization[0])
+			dropout_prob = np.random.uniform(.5,.95,1)
+			dense_regularization = 10**np.random.uniform(-6,-2,1)
+			model.layers['dropout_1'].p = dropout_prob[0]
+			model.layers['dense_1'].W_regularizer = l2(dense_regularization[0])
 			print 'running crossval trial', i, 'learning rate is', learning_rate
+			print 'dropout prob is', dropout_prob
+			print 'regularization strength is', dense_regularization
 			adam = Adam(lr=learning_rate[0], beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 			model.compile(loss='categorical_crossentropy', optimizer=adam)
 			print "Model has compiled."
@@ -177,7 +179,7 @@ class CrossValidator(object):
 
 solver = CrossValidator()
 solver.run(5)
-print 'best model has learning rate of', solver.best_model.optimizer.lr
+print 'best model has learning rate of', str(solver.best_model.optimizer.lr)
 train_predictions = solver.best_model.predict(X_train, batch_size=32, verbose=1)
 print 'training accuracy is', np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
 # val_predictions = solver.best_model.predict(X_val,batch_size=32,verbose=1)
