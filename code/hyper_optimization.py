@@ -135,13 +135,12 @@ class CrossValidator(object):
 			if i == 0:
 				self.best_model = model
 				self.best_val_loss = epoch_history.history['val_loss'][-1]
-			else:
-				if epoch_history.history['val_loss'][-1] < self.best_val_loss:
-					self.best_model = model
-					self.best_val_loss = epoch_history.history['val_loss'][-1]
+			elif epoch_history.history['val_loss'][-1] < self.best_val_loss:
+				self.best_model = model
+				self.best_val_loss = epoch_history.history['val_loss'][-1]
 
-				self.batch_histories.append(batch_history.history['loss'])
-				self.epoch_histories.append(epoch_history.history['val_loss'])
+			self.batch_histories.append(batch_history.losses)
+			self.epoch_histories.append(epoch_history.history['val_loss'])
 
 			# print "Train Accuracy"
 			# train_predictions = model.predict(X_train, batch_size=32, verbose=1)
