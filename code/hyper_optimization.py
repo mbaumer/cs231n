@@ -161,19 +161,19 @@ class CrossValidator(object):
 			# print np.sum(np.argmax(val_predictions,axis=1) == np.argmax(y_val,axis=1))/X_val.shape[0]
 
 	def plot(self):
-		fig1,ax1 = plt.figure()
-		ax1.set_xlabel('Batch Number')
-		ax1.set_ylabel('Training Loss')
+		plt.figure()
+		plt.xlabel('Batch Number')
+		plt.ylabel('Training Loss')
 		for history in self.batch_histories:
-			ax1.plot(history)
-		fig1.savefig('training_losses.png')
+			plt.plot(history)
+		plt.savefig('training_losses.png')
 
-		fig2,ax2 = plt.figure()
-		ax2.set_xlabel('Epoch Number')
-		ax2.set_ylabel('Validation Loss')
+		plt.figure()
+		plt.xlabel('Epoch Number')
+		plt.ylabel('Validation Loss')
 		for history in self.epoch_histories:
-			ax2.plot(history)
-		fig2.savefig('validation_losses.png')
+			plt.plot(history)
+		plt.savefig('validation_losses.png')
 
 solver = CrossValidator()
 solver.run(5)
