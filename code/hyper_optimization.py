@@ -21,9 +21,9 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-weights_path = '/Users/derekchen/Documents/conv_nets/cs231n/data/vgg16_weights.h5'
-training_input = '/Users/derekchen/Documents/conv_nets/cs231n/data/X.npy'
-training_output = '/Users/derekchen/Documents/conv_nets/cs231n/data/Y.npy'
+weights_path = '/data/vgg16_weights.h5'
+training_input = '/data/X.npy'
+training_output = '/data/Y.npy'
 img_width, img_height = 128, 128
 
 # build the VGG16 network with our input_img as input
