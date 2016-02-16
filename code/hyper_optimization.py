@@ -6,6 +6,7 @@ See https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3 for more info
 import h5py
 import numpy as np
 import pandas as pd
+from copy import copy
 
 from keras import backend as K
 from keras.models import Sequential
@@ -141,11 +142,11 @@ class CrossValidator(object):
 			print 'last val acc is', epoch_history.history['val_acc'][-1]
 			if i == 0:
 				print 'first iteration; saving model'
-				self.best_model = model
+				self.best_model = copy(model)
 				self.best_val_loss = epoch_history.history['val_loss'][-1]
 			elif epoch_history.history['val_loss'][-1] < self.best_val_loss:
 				print 'I think this current model is better: Im saving it.'
-				self.best_model = model
+				self.best_model = copy(model)
 				self.best_val_loss = epoch_history.history['val_loss'][-1]
 
 			self.batch_histories.append(batch_history.losses)
