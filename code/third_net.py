@@ -25,6 +25,7 @@ training_input = '/data/X.npy'
 training_output = '/data/Y.npy'
 img_width, img_height = 128, 128
 epoch_count = 3
+rates = [7.4e-5, 4.2e-5, 1.2e-5]
 
 # build the VGG16 network with our input_img as input
 first_layer = ZeroPadding2D((1, 1), input_shape=(3, img_width, img_height))
@@ -123,17 +124,10 @@ class CrossValidator(object):
 		self.best_model = None
 		self.best_val_loss = 1e9
 
-	def run(self,n_trials):
-		for i in range(n_trials):
-			learning_rate = 10**np.random.uniform(-6,-4,1)
-			# dropout_prob = np.random.uniform(.5,.95,1)
-			# dense_regularization = 10**np.random.uniform(-6,-2,1)
-			# model.layers['dropout_1'].p = dropout_prob[0]
-			# model.layers['dense_1'].W_regularizer = l2(dense_regularization[0])
-			print 'running crossval trial', i, 'learning rate is', learning_rate
-			# print 'dropout prob is', dropout_prob
-			# print 'regularization strength is', dense_regularization
-			adam = Adam(lr=learning_rate[0], beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+	def run(self,rates):
+		for idx, learning_rate in enumerate(rates):
+			print 'Running crossval trial', idx+1, 'Learning rate is', learning_rate
+			adam = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 
 			initial_time = tm.time()
 			model.compile(loss='categorical_crossentropy', optimizer=adam)
@@ -183,7 +177,7 @@ class CrossValidator(object):
 		plt.savefig('validation_losses.png')
 
 solver = CrossValidator()
-solver.run(2)
+solver.run(rates)
 print 'best model has learning rate of', str(solver.best_model.optimizer.lr)
 train_predictions = solver.best_model.predict(X_train, batch_size=32, verbose=1)
 print 'training accuracy is', np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
