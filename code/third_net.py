@@ -24,7 +24,7 @@ weights_path = '/data/vgg16_weights.h5'
 training_input = '/data/X.npy'
 training_output = '/data/Y.npy'
 img_width, img_height = 128, 128
-epoch_count = 3
+epoch_count = 14
 rates = [7.4e-5, 4.2e-5, 1.2e-5]
 
 # build the VGG16 network with our input_img as input
@@ -133,14 +133,18 @@ class CrossValidator(object):
 			model.compile(loss='categorical_crossentropy', optimizer=adam)
 			checkpoint = tm.time() - initial_time
 			print 'Compiled in %s seconds' % round(checkpoint, 3)
-			self.fit_data(model,i)
+			self.fit_data(model,idx)
 
 	def fit_data(self,model,iteration):
 			batch_history = LossHistory()
 			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count, verbose=1,
 				show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
-			print 'last epoch val loss for this iteration is', epoch_history.history['val_loss'][-1], 'current best is', self.best_val_loss
-			print 'last val acc is', epoch_history.history['val_acc'][-1]
+
+			last_loss = epoch_history.history['val_loss'][-1]
+			last_acc = epoch_history.history['val_acc'][-1]
+			print 'Last validation loss for this iteration is', round(last_loss,4) , 'current best is', self.best_val_loss
+			print 'Last validation accuracy is', round(last_acc,4)
+
 			if iteration == 0:
 				print 'first iteration; saving model'
 				self.best_model = copy(model)
