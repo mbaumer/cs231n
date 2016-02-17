@@ -28,6 +28,7 @@ weights_path = '/data/vgg16_weights.h5'
 training_input = '/data/X.npy'
 training_output = '/data/Y.npy'
 img_width, img_height = 128, 128
+epoch_count = 3
 
 # build the VGG16 network with our input_img as input
 first_layer = ZeroPadding2D((1, 1), input_shape=(3, img_width, img_height))
@@ -85,10 +86,11 @@ for k in range(f.attrs['nb_layers']):
 f.close()
 print('Model loaded.')
 
+# Leave the pretrained layers untouched -----------------
 for layer in model.layers:
 	layer.trainable = False
 
-# Add our own architecture --------------------------
+# Add our own architecture ------------------------------
 
 model.add(Flatten())
 # Note: Keras does automatic shape inference.
@@ -141,9 +143,12 @@ class CrossValidator(object):
 			model.compile(loss='categorical_crossentropy', optimizer=adam)
 			checkpoint = tm.time() - initial_time
 			print 'Compiled in %s seconds' % round(checkpoint, 3)
+			fit_data(model)
 
+	def fit_data(self,model):
 			batch_history = LossHistory()
-			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=20, verbose=1, show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
+			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count, verbose=1,
+				show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
 			print 'last epoch val loss for this iteration is', epoch_history.history['val_loss'][-1], 'current best is', self.best_val_loss
 			print 'last val acc is', epoch_history.history['val_acc'][-1]
 			if i == 0:
@@ -182,7 +187,7 @@ class CrossValidator(object):
 		plt.savefig('validation_losses.png')
 
 solver = CrossValidator()
-solver.run(14)
+solver.run(2)
 print 'best model has learning rate of', str(solver.best_model.optimizer.lr)
 train_predictions = solver.best_model.predict(X_train, batch_size=32, verbose=1)
 print 'training accuracy is', np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
