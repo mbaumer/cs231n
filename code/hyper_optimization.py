@@ -4,6 +4,7 @@ Transfer learning from VGG16
 See https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3 for more info
 '''
 import h5py
+import time as tm
 import numpy as np
 import pandas as pd
 from copy import copy
@@ -135,8 +136,11 @@ class CrossValidator(object):
 			# print 'dropout prob is', dropout_prob
 			# print 'regularization strength is', dense_regularization
 			adam = Adam(lr=learning_rate[0], beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+
+			initial_time = tm.time()
 			model.compile(loss='categorical_crossentropy', optimizer=adam)
-			print "Model has compiled."
+			checkpoint = tm.time() - initial_time
+			print 'Compiled in %s seconds' % round(checkpoint, 3)
 
 			batch_history = LossHistory()
 			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=20, verbose=1, show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
