@@ -62,4 +62,5 @@ target/
 *.ipynb_checkpoints
 *.pem
 *.h5
+*.DS_Store
 data/
