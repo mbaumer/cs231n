@@ -127,7 +127,7 @@ class CrossValidator(object):
 
 	def run(self,n_trials):
 		for i in range(n_trials):
-			learning_rate = 10**np.random.uniform(-5,-2,1)
+			learning_rate = 10**np.random.uniform(-6,-4,1)
 			# dropout_prob = np.random.uniform(.5,.95,1)
 			# dense_regularization = 10**np.random.uniform(-6,-2,1)
 			# model.layers['dropout_1'].p = dropout_prob[0]
@@ -182,7 +182,7 @@ class CrossValidator(object):
 		plt.savefig('validation_losses.png')
 
 solver = CrossValidator()
-solver.run(20)
+solver.run(14)
 print 'best model has learning rate of', str(solver.best_model.optimizer.lr)
 train_predictions = solver.best_model.predict(X_train, batch_size=32, verbose=1)
 print 'training accuracy is', np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
