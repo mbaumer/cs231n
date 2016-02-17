@@ -1,8 +1,4 @@
 from __future__ import division
-'''
-Transfer learning from VGG16
-See https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3 for more info
-'''
 import h5py
 import time as tm
 import numpy as np
