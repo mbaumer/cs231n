@@ -58,5 +58,9 @@ docs/_build/
 # PyBuilder
 target/
 
-#Ipython Notebook
-.ipynb_checkpoints
+#Our stuff
+*.ipynb_checkpoints
+*.pem
+*.h5
+*.DS_Store
+data/
