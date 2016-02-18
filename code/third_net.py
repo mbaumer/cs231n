@@ -174,21 +174,21 @@ class CrossValidator(object):
 		plt.ylabel('Training Loss')
 		for history in self.batch_histories:
 			plt.plot(history)
-		plt.savefig('training_losses.png')
+		plt.savefig('Feb_train_loss.png')
 
 		plt.figure()
 		plt.xlabel('Epoch Number')
 		plt.ylabel('Validation Loss')
 		for history in self.epoch_histories:
 			plt.plot(history)
-		plt.savefig('validation_losses.png')
+		plt.savefig('Feb_val_loss.png')
 
 		plt.figure()
 		plt.xlabel('Epoch Number')
 		plt.ylabel('Validation Accuracy')
 		for history in self.epoch_acc_histories:
 			plt.plot(history)
-		plt.savefig('validation_accuracies.png')
+		plt.savefig('Feb_val_accuracy.png')
 
 solver = CrossValidator()
 solver.run(rates)
@@ -200,7 +200,7 @@ print 'training accuracy is', np.sum(np.argmax(train_predictions,axis=1) == np.a
 test_predictions = solver.best_model.predict(X_test,batch_size=32,verbose=1)
 print 'test accuracy is', np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
 solver.plot()
-print 'The loss curves pictures are in current directory, named as training_losses.png and validation_losses.png'
+print 'Loss curves images are in current directory, named as train_loss.png and val_loss.png'
 np.save('test_pred.npy',test_predictions)
 np.save('train_pred.npy',train_predictions)
 
