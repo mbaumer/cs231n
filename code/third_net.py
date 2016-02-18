@@ -201,4 +201,6 @@ test_predictions = solver.best_model.predict(X_test,batch_size=32,verbose=1)
 print 'test accuracy is', np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
 solver.plot()
 print 'The loss curves pictures are in current directory, named as training_losses.png and validation_losses.png'
+np.save('test_pred.npy',test_predictions)
+np.save('train_pred.npy',train_predictions)
 
