@@ -20,9 +20,9 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-weights_path = '/Users/mbaumer/Documents/CS231n/project/cs231n/data/vgg16_weights.h5'
-training_input = '/Users/mbaumer/Documents/CS231n/project/cs231n/data/X.npy'
-training_output = '/Users/mbaumer/Documents/CS231n/project/cs231n/data/Y.npy'
+weights_path = '/data/vgg16_weights.h5'
+training_input = '/data/X.npy'
+training_output = '/data/Y.npy'
 img_width, img_height = 128, 128
 epoch_count = 14
 rates = [7.4e-5, 4.2e-5, 1.2e-5]
