@@ -119,14 +119,18 @@ class CrossValidator(object):
 
 			model.add(Flatten())
 			# Note: Keras does automatic shape inference.
-			model.add(Dense(256,name='dense_1',init='he_normal'))
+			model.add(Dense(4096,name='dense_1',init='he_normal'))
 			model.add(Activation('relu'))
 			model.add(Dropout(0.5,name='dropout_1'))
-			# model.add(Dense(256))
-			# model.add(Activation('relu'))
-			#model.add(Dropout(0.5))
 
-			# model.add(Dense(3))
+			model.add(Dense(4096,name='dense_2',init='he_normal'))
+			model.add(Activation('relu'))
+			model.add(Dropout(0.5))
+			model.add(Dense(1000,name='dense_2',init='he_normal'))
+			model.add(Activation('relu'))
+			model.add(Dropout(0.5,name='dropout_1'))
+
+			model.add(Dense(3))
 			model.add(Activation('softmax'))
 
 			adam = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
