@@ -126,7 +126,7 @@ class CrossValidator(object):
 			# model.add(Activation('relu'))
 			#model.add(Dropout(0.5))
 
-			# model.add(Dense(3))
+			model.add(Dense(3))
 			model.add(Activation('softmax'))
 
 			adam = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
