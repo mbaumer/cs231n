@@ -1,5 +1,6 @@
 from __future__ import division
 import h5py
+import types
 import time as tm
 import numpy as np
 import pandas as pd
@@ -12,6 +13,7 @@ from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
 from keras.regularizers import l2
 from keras.callbacks import Callback
+from keras.preprocessing.image import ImageDataGenerator
 
 from sklearn.cross_validation import train_test_split
 from keras.utils import np_utils, generic_utils
@@ -29,36 +31,47 @@ learning_rates = [7.4e-5, 4.2e-5, 1.2e-5]
 
 X = np.load(training_input).astype('float32')
 y = np.load(training_output).astype('float32')
-X, y = preprocess_data(X,y)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
+datagen = preprocess_data(X_train)
 
-def preprocess_data(X,y):
-  # Center the data
-  X -= np.mean(X,axis=0)
-  # Normalize the data?
-  # TODO: Normalize from 0 to 1 (don't want to go into negative numbers for pixel values)
+def preprocess_data(X_train):
+  # Take over the default Image Data Generator
+  CustomDataGenerator = copy(ImageDataGenerator)
+  # Add new functionality within the Data Generator
+  # http://stackoverflow.com/questions/972/adding-a-method-to-an-existing-object-instance
+  CustomDataGenerator.random_crops = types.MethodType( random_crops, CustomDataGenerator )
+  CustomDataGenerator.deterministic_crops = types.MethodType( deterministic_crops, CustomDataGenerator )
+  # TODO: Some more work to wire it all together
 
-  return X, y
+  # Center and Normalize the data
+  # X -= np.mean(X,axis=0)  # Old method not needed any longer
+  generator = CustomDataGenerator(featurewise_center=True,
+      featurewise_std_normalization=True, horizontal_flip=True,
+      crop_randomly=True, crop_deterministically=True)
+  # compute mean for center, and std_dev for normalization
+  generator.fit(X_train)
+
+  return generator
 
 
 # Returns 10 random crops from the original image used during training phase
-def random_crops(image, img_height, img_width):
+def random_crops(self, image, img_height, img_width):
   full_height, full_width = image.shape
   acceptable_height = full_height - img_height
   acceptable_width = full_width - img_width
 
   crops = []
-  for crop in xrange(10):
+  for i in xrange(10):
     h = numpy.random.randint(acceptable_height)
     w = numpy.random.randint(acceptable_width)
-    crop = np.mask_image(image, [h, w], img_height, img_width) #yea, I made that up
+    crop = image[3, h:h+img_height, w:w+img_width]
     crops.append(crop)
 
   return crops
 
 # Returns 5 crops of the image from the corners and middle used during testing
-def deterministic_crops(image, img_height, img_width):
+def deterministic_crops(self, image, img_height, img_width):
   full_height, full_width = image.shape
   half_h = img_height/2
   half_w = img_width/2
@@ -74,7 +87,9 @@ def deterministic_crops(image, img_height, img_width):
   crops = []
   corners = [top_left, top_right, bottom_left, bottom_right, middle]
   for corner in corners:
-    crop = np.mask_image(image, corner, img_height, img_width) #yea, I made that up
+    h = corner[0]
+    w = corner[1]
+    crop = image[3, h:h+img_height, w:w+img_width]
     crops.append(crop)
 
   return crops
@@ -189,8 +204,12 @@ class CrossValidator(object):
 
   def fit_data(self,model,iteration):
       batch_history = LossHistory()
-      epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count, verbose=1,
-        show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
+      # fits the model on batches with real-time data augmentation:
+      epoch_history = model.fit_generator(datagen.flow(X_train, Y_train, batch_size=32),
+                    samples_per_epoch=len(X_train), nb_epoch=epoch_count, verbose=1,
+                    show_accuracy=True, callbacks=[batch_history], validation_split=0.2))
+      # epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count, verbose=1,
+      #   show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
 
       last_loss = epoch_history.history['val_loss'][-1]
       last_acc = epoch_history.history['val_acc'][-1]
