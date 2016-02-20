@@ -10,6 +10,7 @@ from keras.models import Sequential
 from keras.optimizers import SGD, Adam
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
+from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras.callbacks import Callback
 
@@ -59,6 +60,13 @@ def createModel():
 	model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
+	# ------------------------------------------------------------------------
+	# We might add cut it off here
+	# for layer in model.layers:
+	# 	layer.trainable = False
+	# 	layer.learning_rate = something?
+	# ------------------------------------------------------------------------
+
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_1'))
 	model.add(ZeroPadding2D((1, 1)))
@@ -69,6 +77,9 @@ def createModel():
 
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_1'))
+	model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=-1, momentum=0.9, weights=None))
+  error  # look I added Batch Norm! ^ ^^
+  # import is on line 13
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_2'))
 	model.add(ZeroPadding2D((1, 1)))
