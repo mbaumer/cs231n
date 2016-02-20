@@ -29,9 +29,56 @@ learning_rates = [7.4e-5, 4.2e-5, 1.2e-5]
 
 X = np.load(training_input).astype('float32')
 y = np.load(training_output).astype('float32')
-X -= np.mean(X,axis=0)
+X, y = preprocess_data(X,y)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
+
+def preprocess_data(X,y):
+  # Center the data
+  X -= np.mean(X,axis=0)
+  # Normalize the data?
+  # TODO: Normalize from 0 to 1 (don't want to go into negative numbers for pixel values)
+
+  return X, y
+
+
+# Returns 10 random crops from the original image used during training phase
+def random_crops(image, img_height, img_width):
+  full_height, full_width = image.shape
+  acceptable_height = full_height - img_height
+  acceptable_width = full_width - img_width
+
+  crops = []
+  for crop in xrange(10):
+    h = numpy.random.randint(acceptable_height)
+    w = numpy.random.randint(acceptable_width)
+    crop = np.mask_image(image, [h, w], img_height, img_width) #yea, I made that up
+    crops.append(crop)
+
+  return crops
+
+# Returns 5 crops of the image from the corners and middle used during testing
+def deterministic_crops(image, img_height, img_width):
+  full_height, full_width = image.shape
+  half_h = img_height/2
+  half_w = img_width/2
+  midpoint_h = full_height/2
+  midpoint_w = full_width/2
+
+  top_left = [0,0] #yay easy!
+  top_right = [0, full_width - img_width]
+  bottom_left = [full_height - img_height, 0]
+  bottom_right = [full_height - img_height, full_width - img_width]
+  middle = [midpoint_h - half_h, midpoint_w - half_w]
+
+  crops = []
+  corners = [top_left, top_right, bottom_left, bottom_right, middle]
+  for corner in corners:
+    crop = np.mask_image(image, corner, img_height, img_width) #yea, I made that up
+    crops.append(crop)
+
+  return crops
+
 
 def createModel():
   # build the VGG16 network with our input_img as input
@@ -162,14 +209,6 @@ class CrossValidator(object):
       self.batch_histories.append(batch_history.losses)
       self.epoch_histories.append(epoch_history.history['val_loss'])
       self.epoch_acc_histories.append(epoch_history.history['val_acc'])
-
-      # print "Train Accuracy"
-      # train_predictions = model.predict(X_train, batch_size=32, verbose=1)
-      # print np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
-
-      # print "Val Accuracy"
-      # val_predictions = model.predict(X_val,batch_size=32,verbose=1)
-      # print np.sum(np.argmax(val_predictions,axis=1) == np.argmax(y_val,axis=1))/X_val.shape[0]
 
   def plot(self):
     plt.figure()
