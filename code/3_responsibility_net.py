@@ -6,10 +6,10 @@ import pandas as pd
 from copy import copy
 
 from keras import backend as K
+from keras.layers import core
+from keras.layers import convolutional as conv
 from keras.models import Sequential
 from keras.optimizers import SGD, Adam
-from keras.layers.core import Dense, Dropout, Activation, Flatten
-from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
 from keras.regularizers import l2
 from keras.callbacks import Callback
 
@@ -20,9 +20,9 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-weights_path = '/data/vgg16_weights.h5'
-training_input = '/data/X.npy'
-training_output = '/data/Y.npy'
+weights_path = '/Users/derekchen/Documents/conv_nets/cs231n/data/vgg16_weights.h5'
+training_input = '/Users/derekchen/Documents/conv_nets/cs231n/data/X.npy'
+training_output = '/Users/derekchen/Documents/conv_nets/cs231n/data/Y.npy'
 img_width, img_height = 128, 128
 epoch_count = 14
 rates = [7.4e-5, 4.2e-5, 1.2e-5]
@@ -36,45 +36,45 @@ y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 def createModel():
 
 	# build the VGG16 network with our input_img as input
-	first_layer = ZeroPadding2D((1, 1), input_shape=(3, img_width, img_height))
+	first_layer = conv.ZeroPadding2D((1, 1), input_shape=(3, img_width, img_height))
 
 	model = Sequential()
 	model.add(first_layer)
 
-	model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1'))
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
-	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+	model.add(conv.Convolution2D(64, 3, 3, activation='relu', name='conv1_1'))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
+	model.add(conv.MaxPooling2D((2, 2), strides=(2, 2)))
 
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
-	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
+	model.add(conv.MaxPooling2D((2, 2), strides=(2, 2)))
 
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_2'))
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
-	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(256, 3, 3, activation='relu', name='conv3_2'))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
+	model.add(conv.MaxPooling2D((2, 2), strides=(2, 2)))
 
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_1'))
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_2'))
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_3'))
-	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(512, 3, 3, activation='relu', name='conv4_1'))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(512, 3, 3, activation='relu', name='conv4_2'))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(512, 3, 3, activation='relu', name='conv4_3'))
+	model.add(conv.MaxPooling2D((2, 2), strides=(2, 2)))
 
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_1'))
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_2'))
-	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
-	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(512, 3, 3, activation='relu', name='conv5_1'))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(512, 3, 3, activation='relu', name='conv5_2'))
+	model.add(conv.ZeroPadding2D((1, 1)))
+	model.add(conv.Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
+	model.add(conv.MaxPooling2D((2, 2), strides=(2, 2)))
 
 	# get the symbolic outputs of each "key" layer (we gave them unique names).
 	layer_dict = dict([(layer.name, layer) for layer in model.layers])
@@ -117,17 +117,17 @@ class CrossValidator(object):
 			print 'Running crossval trial', idx+1, 'Learning rate is', learning_rate
 			model = createModel()
 
-			model.add(Flatten())
+			model.add(core.Flatten())
 			# Note: Keras does automatic shape inference.
-			model.add(Dense(256,name='dense_1',init='he_normal'))
-			model.add(Activation('relu'))
-			model.add(Dropout(0.5,name='dropout_1'))
-			# model.add(Dense(256))
-			# model.add(Activation('relu'))
-			#model.add(Dropout(0.5))
+			model.add(core.Dense(256,name='dense_1',init='he_normal'))
+			model.add(core.Activation('relu'))
+			model.add(core.Dropout(0.5,name='dropout_1'))
+			# model.add(core.Dense(256))
+			# model.add(core.Activation('relu'))
+			#model.add(core.Dropout(0.5))
 
-			model.add(Dense(3))
-			model.add(Activation('softmax'))
+			model.add(core.Dense(3))
+			model.add(core.Activation('softmax'))
 
 			adam = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 
