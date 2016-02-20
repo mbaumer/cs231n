@@ -17,15 +17,15 @@ from sklearn.cross_validation import train_test_split
 from keras.utils import np_utils, generic_utils
 
 import matplotlib
-matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
+matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 
 weights_path = '/data/vgg16_weights.h5'
-training_input = '/data/X.npy'
-training_output = '/data/Y.npy'
+training_input = '/data/X_artists.npy'
+training_output = '/data/Y_artists.npy'
 img_width, img_height = 128, 128
 epoch_count = 14
-rates = [7.4e-5, 4.2e-5, 1.2e-5]
+learning_rates = [7.4e-5, 4.2e-5, 1.2e-5]
 
 X = np.load(training_input).astype('float32')
 y = np.load(training_output).astype('float32')
@@ -34,7 +34,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 
 def createModel():
-
 	# build the VGG16 network with our input_img as input
 	first_layer = ZeroPadding2D((1, 1), input_shape=(3, img_width, img_height))
 
@@ -205,6 +204,8 @@ test_predictions = solver.best_model.predict(X_test,batch_size=32,verbose=1)
 print 'test accuracy is', np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
 solver.plot()
 print 'Loss curves images are in current directory, named as train_loss.png and val_loss.png'
+
+np.save('epoch_losses.npy', np.array(solver.epoch_histories))
 np.save('test_pred.npy',test_predictions)
 np.save('train_pred.npy',train_predictions)
 
