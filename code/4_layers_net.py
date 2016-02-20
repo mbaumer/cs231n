@@ -77,13 +77,14 @@ def createModel():
 
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_1'))
-	model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=-1, momentum=0.9, weights=None))
+	model.add(BatchNormalization())    # import is on line 13
   error  # look I added Batch Norm! ^ ^^
-  # import is on line 13
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_2'))
+	model.add(BatchNormalization())
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
+	model.add(BatchNormalization())
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
 	# get the symbolic outputs of each "key" layer (we gave them unique names).
