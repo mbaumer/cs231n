@@ -188,7 +188,7 @@ def vote_for_best(results):
     answers += weighted_results
   answers = np.argmax(answers, axis=1)
 
-  for i in range(5):   # 5 should be replaced with len(X_train[0])
+  for i in range(len(X_train[0])):
     predictions[i, answers[i]] = 1.
   return predictions
 
