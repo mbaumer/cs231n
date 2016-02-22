@@ -129,44 +129,46 @@ class CrossValidator(object):
 			model.add(core.Dense(3))
 			model.add(core.Activation('softmax'))
 
-			adam = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+			optimizer = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+			self.solve_model(optimizer)
 
-			initial_time = tm.time()
-			model.compile(loss='categorical_crossentropy', optimizer=adam)
-			checkpoint = tm.time() - initial_time
-			print 'Compiled in %s seconds' % round(checkpoint, 3)
-			self.fit_data(model,idx)
+	def solve_model(self, optimizer):
+		initial_time = tm.time()
+		model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+		checkpoint = tm.time() - initial_time
+		print 'Compiled in %s seconds' % round(checkpoint, 3)
+		self.fit_data(model,idx)
 
 	def fit_data(self,model,iteration):
-			batch_history = LossHistory()
-			epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count, verbose=1,
-				show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
+		batch_history = LossHistory()
+		epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count, verbose=1,
+			show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
 
-			last_loss = epoch_history.history['val_loss'][-1]
-			last_acc = epoch_history.history['val_acc'][-1]
-			print 'Last validation loss for this iteration is', round(last_loss,4) , 'current best is', self.best_val_loss
-			print 'Last validation accuracy is', round(last_acc,4)
+		last_loss = epoch_history.history['val_loss'][-1]
+		last_acc = epoch_history.history['val_acc'][-1]
+		print 'Last validation loss for this iteration is', round(last_loss,4) , 'current best is', self.best_val_loss
+		print 'Last validation accuracy is', round(last_acc,4)
 
-			if iteration == 0:
-				print 'first iteration; saving model'
-				self.best_model = copy(model)
-				self.best_val_loss = epoch_history.history['val_loss'][-1]
-			elif epoch_history.history['val_loss'][-1] < self.best_val_loss:
-				print 'I think this current model is better: Im saving it.'
-				self.best_model = copy(model)
-				self.best_val_loss = epoch_history.history['val_loss'][-1]
+		if iteration == 0:
+			print 'first iteration; saving model'
+			self.best_model = copy(model)
+			self.best_val_loss = epoch_history.history['val_loss'][-1]
+		elif epoch_history.history['val_loss'][-1] < self.best_val_loss:
+			print 'I think this current model is better: Im saving it.'
+			self.best_model = copy(model)
+			self.best_val_loss = epoch_history.history['val_loss'][-1]
 
-			self.batch_histories.append(batch_history.losses)
-			self.epoch_histories.append(epoch_history.history['val_loss'])
-			self.epoch_acc_histories.append(epoch_history.history['val_acc'])
+		self.batch_histories.append(batch_history.losses)
+		self.epoch_histories.append(epoch_history.history['val_loss'])
+		self.epoch_acc_histories.append(epoch_history.history['val_acc'])
 
-			# print "Train Accuracy"
-			# train_predictions = model.predict(X_train, batch_size=32, verbose=1)
-			# print np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
+		# print "Train Accuracy"
+		# train_predictions = model.predict(X_train, batch_size=32, verbose=1)
+		# print np.sum(np.argmax(train_predictions,axis=1) == np.argmax(y_train,axis=1))/X_train.shape[0]
 
-			# print "Val Accuracy"
-			# val_predictions = model.predict(X_val,batch_size=32,verbose=1)
-			# print np.sum(np.argmax(val_predictions,axis=1) == np.argmax(y_val,axis=1))/X_val.shape[0]
+		# print "Val Accuracy"
+		# val_predictions = model.predict(X_val,batch_size=32,verbose=1)
+		# print np.sum(np.argmax(val_predictions,axis=1) == np.argmax(y_val,axis=1))/X_val.shape[0]
 
 	def plot(self):
 		plt.figure()
