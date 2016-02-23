@@ -40,10 +40,10 @@ y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 if env == 'local':
   classes = 3
   rates = [7.4e-5, 1.2e-5, 4.4e-6]
-  epoch_count = 3
+  epoch_count = 4
   img_width, img_height = 128, 128
-  X_train, X_test = X_train[:50,:,:,:], X_test[:50,:,:,:]
-  y_train, y_test = y_train[:50,:], y_test[:50,:]
+  X_train, X_test = X_train[:100,:,:,:], X_test[:100,:,:,:]
+  y_train, y_test = y_train[:100,:], y_test[:100,:]
 elif env == 'remote':
   classes = 20
   rates = [7.4e-5, 4.2e-5, 1.2e-5, 7.4e-6, 4.4e-6]
@@ -62,21 +62,21 @@ def createModel():
   model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
   model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
+  model.add(ZeroPadding2D((1, 1)))
+  model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
+  model.add(ZeroPadding2D((1, 1)))
+  model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
+  model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+  model.add(ZeroPadding2D((1, 1)))
+  model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
+  model.add(ZeroPadding2D((1, 1)))
+  model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_2'))
+  model.add(ZeroPadding2D((1, 1)))
+  model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
+  model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
   if env == 'remote':
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_2'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
     model.add(ZeroPadding2D((1, 1)))
     model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_1'))
     model.add(ZeroPadding2D((1, 1)))
@@ -176,28 +176,28 @@ def build_ensembles(learning_rates):
   for rate in learning_rates:
     solver = CrossValidator()  # should really be renamed as ModelMaker
     model = solver.run(rate)
-    print "Test Accuracy for Learning Rate", rate
     test_predictions = model.predict(X_test,batch_size=32,verbose=1)
+    print "Test Accuracy for Learning Rate", rate
     print np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
     ensemble_results.append(test_predictions)
 
   return ensemble_results
 
 def vote_for_best(results):
-  answers = np.zeros([X_train.shape[0], classes])
+  answers = np.zeros(results[0].shape)
+  predictions = np.zeros(results[0].shape)
 
   for idx, result in enumerate(results):
     weighting = 1+(idx/100.0)
     weighted_results = result * weighting
     answers += weighted_results
-    print answers[0:14,:]
   answers = np.argmax(answers, axis=1)
-  print answers.shape
-  print answers[0:14]
-  return np_utils.to_categorical(answers)
+
+  for i in range(X_train.shape[0]):
+    predictions[i, answers[i]] = 1.
+  return predictions
 
 ensemble_results = build_ensembles(rates)
 final_predictions = vote_for_best(ensemble_results)
-print final_predictions[0:14,:]
-print 'Final accuracy is', np.sum(np.argmax(final_predictions,axis=1) == np.argmax(y_test[:50,],axis=1))/X_test[:50,:,:,:].shape[0]
+print 'Final accuracy is', np.sum(np.argmax(final_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
 print "Sixth net is done."
