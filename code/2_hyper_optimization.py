@@ -117,7 +117,7 @@ class CrossValidator(object):
 
 	def run(self, n_trials):
 		for trial in range(n_trials):
-			
+
 			learning_rate = 10**np.random.uniform(-6,-3)
 			reg_strength = 10**np.random.uniform(-7,0)
 			dropout_prob = np.random.uniform(0.1,0.9)
@@ -132,17 +132,17 @@ class CrossValidator(object):
 			model.add(Dense(4096,name='dense_1',init='he_normal',W_regularizer=l2(reg_strength)))
 			model.add(BatchNormalization(momentum=0.9))
 			model.add(Activation('relu'))
-			model.add(Dropout(0.5,name='dropout_1'))
+			model.add(Dropout(dropout_prob,name='dropout_1'))
 
 			model.add(Dense(4096,name='dense_2',init='he_normal',W_regularizer=l2(reg_strength)))
 			model.add(BatchNormalization(momentum=0.9))
 			model.add(Activation('relu'))
-			model.add(Dropout(0.5,name='dropout_2'))
+			model.add(Dropout(dropout_prob,name='dropout_2'))
 
 			model.add(Dense(1000,name='dense_3',init='he_normal',W_regularizer=l2(reg_strength)))
 			model.add(BatchNormalization(momentum=0.9))
 			model.add(Activation('relu'))
-			model.add(Dropout(0.5,name='dropout_3'))
+			model.add(Dropout(dropout_prob,name='dropout_3'))
 
 			model.add(Dense(3))
 			model.add(Activation('softmax'))
@@ -168,7 +168,7 @@ class CrossValidator(object):
 				self.best_model = copy(model)
 				self.best_val_loss = epoch_history.history['val_loss'][-1]
 				self.best_model_params = {'learning_rate': learning_rate, 'reg_strength': reg_strength, 'dropout_prob': dropout_prob}
-				
+
 			elif epoch_history.history['val_loss'][-1] < self.best_val_loss:
 				print 'I think this current model is better: Im saving it.'
 				self.best_model = copy(model)
