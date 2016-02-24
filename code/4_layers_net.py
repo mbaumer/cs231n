@@ -18,15 +18,16 @@ from sklearn.cross_validation import train_test_split
 from keras.utils import np_utils, generic_utils
 
 import matplotlib
-import matplotlib.pyplot as plt
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
+import matplotlib.pyplot as plt
 
-weights_path = '/data/vgg16_weights.h5'
-training_input = '/data/X_artists.npy'
-training_output = '/data/Y_artists.npy'
+path_head = '/Users/mbaumer/Documents/CS231n/project/cs231n'
+weights_path = path_head+'/data/vgg16_weights.h5'
+training_input = path_head+'/data/X.npy'
+training_output = path_head+'/data/Y.npy'
 img_width, img_height = 128, 128
 epoch_count = 14
-learning_rates = [7.4e-5, 4.2e-5, 1.2e-5]
+rates = [7.4e-5, 4.2e-5, 1.2e-5]
 
 X = np.load(training_input).astype('float32')
 y = np.load(training_output).astype('float32')
@@ -34,77 +35,128 @@ X -= np.mean(X,axis=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 
-def createModel():
+def createModel(train_level=0):
+	# train_level = 0: only train FC layers
+	# 				1: train FC layers and last 3 conv layers
+	# 				2: train FC layers and last 6 conv layers
+
 	# build the VGG16 network with our input_img as input
-	first_layer = ZeroPadding2D((1, 1), input_shape=(3, img_width, img_height))
-
 	model = Sequential()
-	model.add(first_layer)
-
+	model.add(ZeroPadding2D((1, 1), input_shape=(3, img_width, img_height)))
 	model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1'))
+
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
+
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
+
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
+
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
+
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_2'))
+
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
+
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
-	# ------------------------------------------------------------------------
-	# We might add cut it off here
-	# for layer in model.layers:
-	# 	layer.trainable = False
-	# 	layer.learning_rate = something?
-	# ------------------------------------------------------------------------
+	for layer in model.layers:
+		layer.trainable = False
 
 	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_1'))
+	model.add(Convolution2D(512, 3, 3, name='conv4_1'))
+	if train_level == 2: model.add(BatchNormalization())   
+	model.add(Activation('relu',name='relu_1'))
+	
 	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_2'))
+	model.add(Convolution2D(512, 3, 3, name='conv4_2'))
+	if train_level == 2: model.add(BatchNormalization())     
+	model.add(Activation('relu',name='relu_2'))
+	
 	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_3'))
+	model.add(Convolution2D(512, 3, 3, name='conv4_3'))
+	if train_level == 2: model.add(BatchNormalization())   
+	model.add(Activation('relu',name='relu_3'))
+
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
+	if train_level < 2:
+		for layer in model.layers:
+			layer.trainable = False
+
 	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_1'))
-	model.add(BatchNormalization())    # import is on line 13
-  error  # look I added Batch Norm! ^ ^^
+	model.add(Convolution2D(512, 3, 3, name='conv5_1'))
+	if train_level == 1: model.add(BatchNormalization()) 
+	model.add(Activation('relu'))
+
 	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_2'))
-	model.add(BatchNormalization())
+	model.add(Convolution2D(512, 3, 3, name='conv5_2'))
+	if train_level == 1: model.add(BatchNormalization())   
+	model.add(Activation('relu'))
+
 	model.add(ZeroPadding2D((1, 1)))
-	model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
-	model.add(BatchNormalization())
+	model.add(Convolution2D(512, 3, 3, name='conv5_3'))
+	if train_level == 1: model.add(BatchNormalization())   
+	model.add(Activation('relu'))
+
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+	if train_level < 1:
+		for layer in model.layers:
+			layer.trainable = False
 
 	# get the symbolic outputs of each "key" layer (we gave them unique names).
 	layer_dict = dict([(layer.name, layer) for layer in model.layers])
 
 	# Load the weights from our dropbox folder (about 0.5 GB worth) --------------------------
 	f = h5py.File(weights_path)
-
+	skipped = 0
 	for k in range(f.attrs['nb_layers']):
 		if k >= len(model.layers):
 			break         # we don't look at the last (fully-connected) layers in the savefile
-		g = f['layer_{}'.format(k)]
+		isActivation = (type(model.layers[k]) == type(Activation('relu')))
+		isBatchNorm = (type(model.layers[k]) == type(BatchNormalization()))
+		if isActivation | isBatchNorm:
+			skipped += 1
+			print 'skipping'
+			continue #skip activation layers
+		g = f['layer_{}'.format(k-skipped)]
+		print g.keys()
 		weights = [g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
+		print type(model.layers[k])
 		model.layers[k].set_weights(weights)
 	f.close()
-	print('Model loaded.')
+	print('Model weights loaded.')
 
-	# Leave the pretrained layers untouched -----------------
-	for layer in model.layers:
-		layer.trainable = False
+	model.add(Flatten())
+	# Note: Keras does automatic shape inference.
+	model.add(Dense(4096,name='dense_1',init='he_normal'))
+	model.add(BatchNormalization())   
+	model.add(Activation('relu'))
+	model.add(Dropout(0.5,name='dropout_1'))
+
+	model.add(Dense(4096,name='dense_2',init='he_normal'))
+	model.add(BatchNormalization())   
+	model.add(Activation('relu'))
+	model.add(Dropout(0.5))
+
+	model.add(Dense(1000,name='dense_2',init='he_normal'))
+	model.add(BatchNormalization())   
+	model.add(Activation('relu'))
+	model.add(Dropout(0.5,name='dropout_1'))
+
+	model.add(Dense(3))
+	model.add(Activation('softmax'))
+
 	return model
 
 class LossHistory(Callback):
@@ -126,23 +178,7 @@ class CrossValidator(object):
 	def run(self,rates):
 		for idx, learning_rate in enumerate(rates):
 			print 'Running crossval trial', idx+1, 'Learning rate is', learning_rate
-			model = createModel()
-
-			model.add(Flatten())
-			# Note: Keras does automatic shape inference.
-			model.add(Dense(4096,name='dense_1',init='he_normal'))
-			model.add(Activation('relu'))
-			model.add(Dropout(0.5,name='dropout_1'))
-
-			model.add(Dense(4096,name='dense_2',init='he_normal'))
-			model.add(Activation('relu'))
-			model.add(Dropout(0.5))
-			model.add(Dense(1000,name='dense_2',init='he_normal'))
-			model.add(Activation('relu'))
-			model.add(Dropout(0.5,name='dropout_1'))
-
-			model.add(Dense(20))
-			model.add(Activation('softmax'))
+			model = createModel(train_level=1)
 
 			adam = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 
