@@ -249,24 +249,24 @@ class CrossValidator(object):
       history_dict = {'batch_histories': self.batch_histories, 'epoch_histories': self.epoch_histories, 'epoch_acc_histories': self.epoch_acc_histories}
       pickle.dump(history_dict,open('history_dict.out','wb'))
 
-  def update(self,src,iteration):
+  def update(self,maker,iteration):
     if iteration == 0:
       print 'first iteration; saving model'
-      self.best_model = copy(model)
-      self.best_val_loss = model.epoch_history.history['val_loss'][-1]
-      self.best_model_params = {'learning_rate': model.learning_rate,
-       'reg_strength': model.reg_strength, 'dropout_prob': model.dropout_prob}
+      self.best_model = copy(maker.model)
+      self.best_val_loss = maker.epoch_history.history['val_loss'][-1]
+      self.best_model_params = {'learning_rate': maker.learning_rate,
+       'reg_strength': maker.reg_strength, 'dropout_prob': maker.dropout_prob}
 
     elif epoch_history.history['val_loss'][-1] < self.best_val_loss:
       print 'I think this current model is better: Im saving it.'
-      self.best_model = copy(model)
-      self.best_val_loss = model.epoch_history.history['val_loss'][-1]
-      self.best_model_params = {'learning_rate': model.learning_rate,
-        'reg_strength': model.reg_strength, 'dropout_prob': model.dropout_prob}
+      self.best_model = copy(maker.model)
+      self.best_val_loss = maker.epoch_history.history['val_loss'][-1]
+      self.best_model_params = {'learning_rate': maker.learning_rate,
+        'reg_strength': maker.reg_strength, 'dropout_prob': maker.dropout_prob}
 
-      self.batch_histories.append(model.batch_history.losses)
-      self.epoch_histories.append(model.epoch_history.history['val_loss'])
-      self.epoch_acc_histories.append(model.epoch_history.history['val_acc'])
+      self.batch_histories.append(maker.batch_history.losses)
+      self.epoch_histories.append(maker.epoch_history.history['val_loss'])
+      self.epoch_acc_histories.append(maker.epoch_history.history['val_acc'])
 
 def build_ensembles(hyperparams_list):
   ensemble_results = []
@@ -278,9 +278,10 @@ def build_ensembles(hyperparams_list):
     print 'Running crossval trial', trial+1
     maker.createModel()
     maker.run()
+    maker.fit_data()
 
     solver.update(maker,trial)
-    test_predictions = model.predict(X_test,batch_size=32,verbose=1)
+    test_predictions = maker.model.predict(X_test,batch_size=32,verbose=1)
     print "Test Accuracy:"
     print np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
     ensemble_results.append(test_predictions)
