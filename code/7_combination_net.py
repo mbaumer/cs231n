@@ -67,7 +67,7 @@ class ModelMaker(object):
   def __init__(self,hyperparams,train_level):
     self.learning_rate = hyperparams[0]
     self.reg_strength = hyperparams[1]
-    self.dropout_prob = hyperparams[2]
+    self.dropout_prob = round(hyperparams[2], 2)
     self.batch_history = None
     self.epoch_history = None
     self.model = None
@@ -216,7 +216,6 @@ class ModelMaker(object):
     self.epoch_history = epoch_history
 
 
-
 class CrossValidator(object):
   def __init__(self):
     self.batch_histories = []
@@ -278,7 +277,6 @@ def build_ensembles(hyperparams_list):
     maker = ModelMaker(hyperparams[trial], train_level)
     print 'Running crossval trial', trial+1
     maker.createModel()
-    print "got this far"
     maker.run()
 
     solver.update(maker,trial)
@@ -304,9 +302,9 @@ def vote_for_best(results):
   return predictions
 
 
-learning_rates = 10**np.random.uniform(-6,-3,n_trials)
-reg_strengths = 10**np.random.uniform(-7,0,n_trials)
-dropout_probs = np.random.uniform(0.1,0.9,n_trials)
+learning_rates = 10**np.random.uniform(-6,-3,n_trials).astype('float32')
+reg_strengths = 10**np.random.uniform(-7,0,n_trials).astype('float32')
+dropout_probs = np.random.uniform(0.1,0.9,n_trials).astype('float32')
 hyperparams = zip(learning_rates,reg_strengths,dropout_probs)
 
 ensemble_results = build_ensembles(hyperparams)
