@@ -74,17 +74,17 @@ def createModel(train_level=0):
 
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, name='conv4_1'))
-	if train_level == 2: model.add(BatchNormalization())   
+	if train_level == 2: model.add(BatchNormalization())
 	model.add(Activation('relu',name='relu_1'))
-	
+
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, name='conv4_2'))
-	if train_level == 2: model.add(BatchNormalization())     
+	if train_level == 2: model.add(BatchNormalization())
 	model.add(Activation('relu',name='relu_2'))
-	
+
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, name='conv4_3'))
-	if train_level == 2: model.add(BatchNormalization())   
+	if train_level == 2: model.add(BatchNormalization())
 	model.add(Activation('relu',name='relu_3'))
 
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
@@ -95,17 +95,17 @@ def createModel(train_level=0):
 
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, name='conv5_1'))
-	if train_level == 1: model.add(BatchNormalization()) 
+	if train_level == 1: model.add(BatchNormalization())
 	model.add(Activation('relu'))
 
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, name='conv5_2'))
-	if train_level == 1: model.add(BatchNormalization())   
+	if train_level == 1: model.add(BatchNormalization())
 	model.add(Activation('relu'))
 
 	model.add(ZeroPadding2D((1, 1)))
 	model.add(Convolution2D(512, 3, 3, name='conv5_3'))
-	if train_level == 1: model.add(BatchNormalization())   
+	if train_level == 1: model.add(BatchNormalization())
 	model.add(Activation('relu'))
 
 	model.add(MaxPooling2D((2, 2), strides=(2, 2)))
@@ -140,17 +140,17 @@ def createModel(train_level=0):
 	model.add(Flatten())
 	# Note: Keras does automatic shape inference.
 	model.add(Dense(4096,name='dense_1',init='he_normal'))
-	model.add(BatchNormalization())   
+	model.add(BatchNormalization())
 	model.add(Activation('relu'))
 	model.add(Dropout(0.5,name='dropout_1'))
 
 	model.add(Dense(4096,name='dense_2',init='he_normal'))
-	model.add(BatchNormalization())   
+	model.add(BatchNormalization())
 	model.add(Activation('relu'))
 	model.add(Dropout(0.5))
 
 	model.add(Dense(1000,name='dense_2',init='he_normal'))
-	model.add(BatchNormalization())   
+	model.add(BatchNormalization())
 	model.add(Activation('relu'))
 	model.add(Dropout(0.5,name='dropout_1'))
 

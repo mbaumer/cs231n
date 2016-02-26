@@ -79,6 +79,14 @@ class CropGenerator(ImageDataGenerator):
 						rounds=1,  # if augment, how many augmentation passes over the data do we use
 						seed=None):
 		X = np.copy(X)
+
+		if self.featurewise_center:
+			self.mean = np.mean(X, axis=0)
+			X -= self.mean
+		if self.featurewise_std_normalization:
+			self.std = np.std(X, axis=0)
+			X /= self.std
+
 		if augment:
 			if mode == 'test': rounds=5
 			aX = np.zeros((rounds*X.shape[0],X.shape[1],target_height,target_width))
@@ -90,13 +98,6 @@ class CropGenerator(ImageDataGenerator):
 					imgs = self.get_crops(X[i], target_height, target_width, deterministic=True)
 				aX[i*rounds:i*rounds+rounds,:,:,:] = imgs
 			X = aX
-
-		if self.featurewise_center:
-			self.mean = np.mean(X, axis=0)
-			X -= self.mean
-		if self.featurewise_std_normalization:
-			self.std = np.std(X, axis=0)
-			X /= self.std
 
 def preprocess_data(X_train,mode='train'):
 	generator = CropGenerator(featurewise_center=True,
@@ -220,7 +221,7 @@ class CrossValidator(object):
 										samples_per_epoch=len(X_train), nb_epoch=epoch_count, verbose=1,
 										show_accuracy=True, callbacks=[batch_history])
 			else:
-				epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count, verbose=1, 
+				epoch_history = model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count, verbose=1,
 										show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
 
 			last_loss = epoch_history.history['val_loss'][-1]
