@@ -47,6 +47,7 @@ if env == 'local':
   X_train, X_test = X_train[:50,:,:,:], X_test[:50,:,:,:]
   y_train, y_test = y_train[:50,:], y_test[:50,:]
   train_level = 0
+  batch_size = 20
 elif env == 'remote':
   classes = 20
   rates = [7.4e-5, 4.2e-5, 1.2e-5, 7.4e-6, 4.4e-6]
@@ -54,6 +55,7 @@ elif env == 'remote':
   epoch_count = 14
   img_width, img_height = 224, 224
   train_level = 0
+  batch_size = 32
 
 class LossHistory(Callback):
   def on_train_begin(self, logs={}):
@@ -160,9 +162,9 @@ class ModelMaker(object):
         print 'skipping'
         continue #skip activation layers
       g = f['layer_{}'.format(k-skipped)]
-      print g.keys()
+      # print g.keys()
       weights = [g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
-      print type(model.layers[k])
+      # print type(model.layers[k])
       model.layers[k].set_weights(weights)
     f.close()
     print('Model weights loaded.')
@@ -204,8 +206,9 @@ class ModelMaker(object):
 
   def fit_data(self):
     batch_history = LossHistory()
-    epoch_history = self.model.fit(X_train, y_train, batch_size=32, nb_epoch=epoch_count,
-      verbose=1, show_accuracy=True, callbacks=[batch_history], validation_split=0.2)
+    epoch_history = self.model.fit(X_train, y_train, batch_size=batch_size,
+      nb_epoch=epoch_count, verbose=1, show_accuracy=True,
+      callbacks=[batch_history], validation_split=0.2)
 
     last_loss = epoch_history.history['val_loss'][-1]
     last_acc = epoch_history.history['val_acc'][-1]
@@ -251,13 +254,13 @@ class CrossValidator(object):
 
   def update(self,maker,iteration):
     if iteration == 0:
-      print 'first iteration; saving model'
+      print 'First iteration; saving model'
       self.best_model = copy(maker.model)
       self.best_val_loss = maker.epoch_history.history['val_loss'][-1]
       self.best_model_params = {'learning_rate': maker.learning_rate,
        'reg_strength': maker.reg_strength, 'dropout_prob': maker.dropout_prob}
 
-    elif epoch_history.history['val_loss'][-1] < self.best_val_loss:
+    elif maker.epoch_history.history['val_loss'][-1] < self.best_val_loss:
       print 'I think this current model is better: Im saving it.'
       self.best_model = copy(maker.model)
       self.best_val_loss = maker.epoch_history.history['val_loss'][-1]
@@ -273,15 +276,15 @@ def build_ensembles(hyperparams_list):
   solver = CrossValidator()
 
   for trial in range(n_trials):
-
+    print '  '
+    print '------------- RUNNING CROSS VALIDATION TRIAL', trial+1, '-------------'
     maker = ModelMaker(hyperparams[trial], train_level)
-    print 'Running crossval trial', trial+1
     maker.createModel()
     maker.run()
     maker.fit_data()
 
     solver.update(maker,trial)
-    test_predictions = maker.model.predict(X_test,batch_size=32,verbose=1)
+    test_predictions = maker.model.predict(X_test,batch_size=batch_size,verbose=1)
     print "Test Accuracy:"
     print np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
     ensemble_results.append(test_predictions)
