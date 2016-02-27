@@ -289,6 +289,8 @@ def build_ensembles(hyperparams_list):
     print np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
     ensemble_results.append(test_predictions)
 
+  solver.plot()
+
   return ensemble_results
 
 def vote_for_best(results):
@@ -314,4 +316,4 @@ hyperparams = zip(learning_rates,reg_strengths,dropout_probs)
 ensemble_results = build_ensembles(hyperparams)
 final_predictions = vote_for_best(ensemble_results)
 print 'Final accuracy is', np.sum(np.argmax(final_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
-print "Sixth net is done."
+print "Seventh net is done."
