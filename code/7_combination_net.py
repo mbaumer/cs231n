@@ -206,16 +206,18 @@ class ModelMaker(object):
     checkpoint = tm.time() - initial_time
     print 'Compiled in %s seconds' % round(checkpoint, 3)
 
-  def fit_data(self, data_source=None):
+  def fit_data(self, X_train):
     batch_history = LossHistory()
-    if data_source is None:
+    if augment:
+      epoch_history = self.model.fit_generator(data_source.flow(X_train, y_train, batch_size=batch_size),
+        samples_per_epoch=len(X_train), nb_epoch=epoch_count, verbose=1,
+        show_accuracy=True, callbacks=[batch_history]) # val_loss requires a separate generator
+      last_loss = epoch_history.history['loss'][-1]
+      last_acc = epoch_history.history['acc'][-1]
+    else:
       epoch_history = self.model.fit(X_train, y_train, batch_size=batch_size,
         nb_epoch=epoch_count, verbose=1, show_accuracy=True,
         callbacks=[batch_history], validation_split=0.2)
-    else:
-      epoch_history = self.model.fit_generator(data_source.flow(X_train, y_train, batch_size=batch_size),
-        samples_per_epoch=len(X_train), nb_epoch=epoch_count, verbose=1,
-        show_accuracy=True, callbacks=[batch_history])
 
     last_loss = epoch_history.history['val_loss'][-1]
     last_acc = epoch_history.history['val_acc'][-1]
@@ -226,10 +228,10 @@ class ModelMaker(object):
     self.epoch_history = epoch_history
 
 class CropGenerator(ImageDataGenerator):
-  '''Generate minibatches with
-  realtime data augmentation.
   '''
-  # Returns 10 random crops from the original image used during training phase
+  Generate minibatches with realtime data augmentation.
+  Returns 10 random crops from the original image used during training phase
+  '''
   def get_crops(self, image, target_height, target_width, Nrandoms=5, deterministic=False):
     full_height= image.shape[-2]
     full_width = image.shape[-1]
@@ -262,41 +264,39 @@ class CropGenerator(ImageDataGenerator):
     crops = np.array(crops)
     return crops
 
-  def fit(self, X,
-            augment=False,  # fit on randomly augmented samples
-            mode='train',
-            target_height=96,
-            target_width=96,
-            rounds=1,  # if augment, how many augmentation passes over the data do we use
-            seed=None):
+  def fit(self,X,mode,rounds,seed,target_height=img_height,target_width=img_width):
     X = np.copy(X)
+
+    print len(X)*rounds*2, "should be 1000"
+    self.epoch_size = len(X)*rounds*2
 
     if self.featurewise_center:
       self.mean = np.mean(X, axis=0)
       X -= self.mean
-    if self.featurewise_std_normalization:
-      self.std = np.std(X, axis=0)
-      X /= self.std
+    # if self.featurewise_std_normalization:
+    #   self.std = np.std(X, axis=0)
+    #   X /= self.std
 
-    if augment:
-      if mode == 'test': rounds=5
-      aX = np.zeros((rounds*X.shape[0],X.shape[1],target_height,target_width))
-      for i in range(X.shape[0]):
-        if mode == 'train':
-          #image, target_height, target_width, Nrandoms=5, deterministic=False
-          imgs = self.get_crops(X[i], target_height, target_width, Nrandoms=rounds)
-        else:
-          imgs = self.get_crops(X[i], target_height, target_width, deterministic=True)
-        aX[i*rounds:i*rounds+rounds,:,:,:] = imgs
-      X = aX
+    # build an empty array of the appropriate size
+    if mode == 'test': rounds = 5
+    aX = np.zeros((rounds*X.shape[0],X.shape[1],target_height,target_width))
 
-def preprocess_data(X_train,mode='train'):
-  generator = CropGenerator(featurewise_center=True,
-      featurewise_std_normalization=False, horizontal_flip=True)
-  generator.fit(X_train,augment=True,mode=mode,rounds=2)
+    for i in range(X.shape[0]):
+      if mode == 'train':
+        imgs = self.get_crops(X[i], target_height, target_width, Nrandoms=rounds)
+      elif mode == 'train':
+        imgs = self.get_crops(X[i], target_height, target_width, deterministic=True)
+        #image, target_height, target_width, Nrandoms=5, deterministic=False
+      aX[i*rounds:i*rounds+rounds,:,:,:] = imgs
+    X = aX
 
+def preprocess_data(X_train, augment, mode):
+  if augment:
+    generator = CropGenerator(featurewise_center=True, horizontal_flip=True)
+    generator.fit(X_train, mode, rounds=10, seed=14)
+  else:
+    generator = X_train
   return generator
-
 
 class CrossValidator(object):
 
@@ -370,13 +370,13 @@ def generate_hyperparams(n_trials):
 
 def build_ensembles(hyperparams_list):
   ensemble_results = []
-  data_source = preprocess_data(X_train) if augment else None
   solver = CrossValidator()
+  data_source = preprocess_data(X_train, augment, mode='train')
 
   for trial in range(n_trials):
     print '  '
     print '------------- RUNNING CROSS VALIDATION TRIAL', trial+1, '-------------'
-    maker = ModelMaker(hyper_parameters[trial])
+    maker = ModelMaker(hyperparams_list[trial])
     maker.create_model()
     maker.compile_model()
     maker.fit_data(data_source)
@@ -403,8 +403,8 @@ def vote_for_best(results):
     predictions[i, answers[i]] = 1.
   return predictions
 
-hyper_parameters = generate_hyperparams(n_trials)
-ensemble_results = build_ensembles(hyper_parameters)
+hyperparams_list = generate_hyperparams(n_trials)
+ensemble_results = build_ensembles(hyperparams_list)
 final_predictions = vote_for_best(ensemble_results)
 print 'Final accuracy is', np.sum(np.argmax(final_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
 print "Seventh net is done."
