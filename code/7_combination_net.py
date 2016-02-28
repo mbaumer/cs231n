@@ -3,6 +3,7 @@ import h5py
 import time as tm
 import numpy as np
 import pandas as pd
+import pickle
 from copy import copy
 
 from keras import backend as K
@@ -13,6 +14,7 @@ from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras.callbacks import Callback
+from keras.preprocessing.image import ImageDataGenerator
 
 from sklearn.cross_validation import train_test_split
 from keras.utils import np_utils, generic_utils
@@ -32,11 +34,15 @@ elif env == 'remote':
   training_input = '/data/X_artists.npy'
   training_output = '/data/Y_artists.npy'
 
+
 X = np.load(training_input).astype('float32')
 y = np.load(training_output).astype('float32')
 X -= np.mean(X,axis=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
+
+train_level = 0
+augment = True
 
 if env == 'local':
   classes = 3
@@ -46,7 +52,6 @@ if env == 'local':
   img_width, img_height = 128, 128
   X_train, X_test = X_train[:50,:,:,:], X_test[:50,:,:,:]
   y_train, y_test = y_train[:50,:], y_test[:50,:]
-  train_level = 0
   batch_size = 20
 elif env == 'remote':
   classes = 20
@@ -54,7 +59,6 @@ elif env == 'remote':
   n_trials = 25
   epoch_count = 14
   img_width, img_height = 224, 224
-  train_level = 0
   batch_size = 32
 
 class LossHistory(Callback):
@@ -66,7 +70,7 @@ class LossHistory(Callback):
 
 class ModelMaker(object):
 
-  def __init__(self,hyperparams,train_level):
+  def __init__(self,hyperparams):
     self.learning_rate = hyperparams[0]
     self.reg_strength = hyperparams[1]
     self.dropout_prob = round(hyperparams[2], 2)
@@ -78,12 +82,10 @@ class ModelMaker(object):
     print 'Reg_strength is', self.reg_strength
     print 'Dropout_prob is', self.dropout_prob
 
-  def createModel(self):
+  def create_model(self):
     # train_level = 0: only train FC layers
     #         1: train FC layers and last 3 conv layers
     #         2: train FC layers and last 6 conv layers
-
-    # build the VGG16 network with our input_img as input
 
     model = Sequential()
     model.add(ZeroPadding2D((1, 1), input_shape=(3, img_width, img_height)))
@@ -197,18 +199,23 @@ class ModelMaker(object):
     model.add(Activation('softmax'))
     self.model = model
 
-  def run(self):
+  def compile_model(self):
     adam = Adam(lr=self.learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     initial_time = tm.time()
     self.model.compile(loss='categorical_crossentropy', optimizer=adam)
     checkpoint = tm.time() - initial_time
     print 'Compiled in %s seconds' % round(checkpoint, 3)
 
-  def fit_data(self):
+  def fit_data(self, data_source=None):
     batch_history = LossHistory()
-    epoch_history = self.model.fit(X_train, y_train, batch_size=batch_size,
-      nb_epoch=epoch_count, verbose=1, show_accuracy=True,
-      callbacks=[batch_history], validation_split=0.2)
+    if data_source is None:
+      epoch_history = self.model.fit(X_train, y_train, batch_size=batch_size,
+        nb_epoch=epoch_count, verbose=1, show_accuracy=True,
+        callbacks=[batch_history], validation_split=0.2)
+    else:
+      epoch_history = self.model.fit_generator(data_source.flow(X_train, y_train, batch_size=batch_size),
+        samples_per_epoch=len(X_train), nb_epoch=epoch_count, verbose=1,
+        show_accuracy=True, callbacks=[batch_history])
 
     last_loss = epoch_history.history['val_loss'][-1]
     last_acc = epoch_history.history['val_acc'][-1]
@@ -218,8 +225,81 @@ class ModelMaker(object):
     self.batch_history = batch_history
     self.epoch_history = epoch_history
 
+class CropGenerator(ImageDataGenerator):
+  '''Generate minibatches with
+  realtime data augmentation.
+  '''
+  # Returns 10 random crops from the original image used during training phase
+  def get_crops(self, image, target_height, target_width, Nrandoms=5, deterministic=False):
+    full_height= image.shape[-2]
+    full_width = image.shape[-1]
+    acceptable_height = full_height - target_height
+    acceptable_width = full_width - target_width
+    half_h = target_height/2
+    half_w = target_width/2
+    midpoint_h = full_height/2
+    midpoint_w = full_width/2
+
+    crops = []
+    if deterministic:
+      top_left = [0,0] #yay easy!
+      top_right = [0, full_width - target_width]
+      bottom_left = [full_height - target_height, 0]
+      bottom_right = [full_height - target_height, full_width - target_width]
+      middle = [midpoint_h - half_h, midpoint_w - half_w]
+      corners = [top_left, top_right, bottom_left, bottom_right, middle]
+      for corner in corners:
+        h = corner[0]
+        w = corner[1]
+        crop = image[:, h:h+target_height, w:w+target_width]
+        crops.append(crop)
+    else:
+      for i in range(Nrandoms):
+        h = np.random.randint(0,acceptable_height)
+        w = np.random.randint(0,acceptable_width)
+        crop = image[:, h:h+target_height, w:w+target_width]
+        crops.append(crop)
+    crops = np.array(crops)
+    return crops
+
+  def fit(self, X,
+            augment=False,  # fit on randomly augmented samples
+            mode='train',
+            target_height=96,
+            target_width=96,
+            rounds=1,  # if augment, how many augmentation passes over the data do we use
+            seed=None):
+    X = np.copy(X)
+
+    if self.featurewise_center:
+      self.mean = np.mean(X, axis=0)
+      X -= self.mean
+    if self.featurewise_std_normalization:
+      self.std = np.std(X, axis=0)
+      X /= self.std
+
+    if augment:
+      if mode == 'test': rounds=5
+      aX = np.zeros((rounds*X.shape[0],X.shape[1],target_height,target_width))
+      for i in range(X.shape[0]):
+        if mode == 'train':
+          #image, target_height, target_width, Nrandoms=5, deterministic=False
+          imgs = self.get_crops(X[i], target_height, target_width, Nrandoms=rounds)
+        else:
+          imgs = self.get_crops(X[i], target_height, target_width, deterministic=True)
+        aX[i*rounds:i*rounds+rounds,:,:,:] = imgs
+      X = aX
+
+def preprocess_data(X_train,mode='train'):
+  generator = CropGenerator(featurewise_center=True,
+      featurewise_std_normalization=False, horizontal_flip=True)
+  generator.fit(X_train,augment=True,mode=mode,rounds=2)
+
+  return generator
+
 
 class CrossValidator(object):
+
   def __init__(self):
     self.batch_histories = []
     self.epoch_histories = []
@@ -228,29 +308,34 @@ class CrossValidator(object):
     self.best_val_loss = 1e9
     self.best_model_params = {}
 
-  def plot(self):
-      plt.figure()
-      plt.xlabel('Batch Number')
-      plt.ylabel('Training Loss')
-      for history in self.batch_histories:
-        plt.plot(history)
-      plt.savefig('Feb_train_loss.png')
+  def plot(self, trial):
+    trl = str(trial)
 
-      plt.figure()
-      plt.xlabel('Epoch Number')
-      plt.ylabel('Validation Loss')
-      for history in self.epoch_histories:
-        plt.plot(history)
-      plt.savefig('Feb_val_loss.png')
+    plt.figure()
+    plt.xlabel('Batch Number')
+    plt.ylabel('Training Loss')
+    for history in self.batch_histories:
+      plt.plot(history)
+    plt.savefig('train_loss_'+trl+'.png')
 
-      plt.figure()
-      plt.xlabel('Epoch Number')
-      plt.ylabel('Validation Accuracy')
-      for history in self.epoch_acc_histories:
-        plt.plot(history)
-      plt.savefig('Feb_val_accuracy.png')
-      history_dict = {'batch_histories': self.batch_histories, 'epoch_histories': self.epoch_histories, 'epoch_acc_histories': self.epoch_acc_histories}
-      pickle.dump(history_dict,open('history_dict.out','wb'))
+    plt.figure()
+    plt.xlabel('Epoch Number')
+    plt.ylabel('Validation Loss')
+    for history in self.epoch_histories:
+      plt.plot(history)
+    plt.savefig('val_loss_'+trl+'.png')
+
+    plt.figure()
+    plt.xlabel('Epoch Number')
+    plt.ylabel('Validation Accuracy')
+    for history in self.epoch_acc_histories:
+      plt.plot(history)
+    plt.savefig('val_accuracy_'+trl+'.png')
+
+    history_dict = {'batch_histories': self.batch_histories,
+      'epoch_histories': self.epoch_histories,
+      'epoch_acc_histories': self.epoch_acc_histories}
+    pickle.dump(history_dict,open('history_dict'+trl+'.out','wb'))
 
   def update(self,maker,iteration):
     if iteration == 0:
@@ -271,22 +356,35 @@ class CrossValidator(object):
       self.epoch_histories.append(maker.epoch_history.history['val_loss'])
       self.epoch_acc_histories.append(maker.epoch_history.history['val_acc'])
 
+def print_accuracy(predictions):
+  print "Test Accuracy:"
+  y_hat = np.argmax(predictions,axis=1)
+  y_actual = np.argmax(y_test,axis=1)
+  print np.sum(y_hat == y_actual)/X_test.shape[0]
+
+def generate_hyperparams(n_trials):
+  learning_rates = 10**np.random.uniform(-6,-3,n_trials).astype('float32')
+  reg_strengths = 10**np.random.uniform(-7,0,n_trials).astype('float32')
+  dropout_probs = np.random.uniform(0.1,0.8,n_trials).astype('float32')
+  return zip(learning_rates,reg_strengths,dropout_probs)
+
 def build_ensembles(hyperparams_list):
   ensemble_results = []
+  data_source = preprocess_data(X_train) if augment else None
   solver = CrossValidator()
 
   for trial in range(n_trials):
     print '  '
     print '------------- RUNNING CROSS VALIDATION TRIAL', trial+1, '-------------'
-    maker = ModelMaker(hyperparams[trial], train_level)
-    maker.createModel()
-    maker.run()
-    maker.fit_data()
+    maker = ModelMaker(hyper_parameters[trial])
+    maker.create_model()
+    maker.compile_model()
+    maker.fit_data(data_source)
 
     solver.update(maker,trial)
-    test_predictions = maker.model.predict(X_test,batch_size=batch_size,verbose=1)
-    print "Test Accuracy:"
-    print np.sum(np.argmax(test_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
+    test_predictions = maker.model.predict(X_test, batch_size=batch_size)
+    print_accuracy(test_predictions)
+    solver.plot(trial)
     ensemble_results.append(test_predictions)
 
   return ensemble_results
@@ -305,13 +403,8 @@ def vote_for_best(results):
     predictions[i, answers[i]] = 1.
   return predictions
 
-
-learning_rates = 10**np.random.uniform(-6,-3,n_trials).astype('float32')
-reg_strengths = 10**np.random.uniform(-7,0,n_trials).astype('float32')
-dropout_probs = np.random.uniform(0.1,0.9,n_trials).astype('float32')
-hyperparams = zip(learning_rates,reg_strengths,dropout_probs)
-
-ensemble_results = build_ensembles(hyperparams)
+hyper_parameters = generate_hyperparams(n_trials)
+ensemble_results = build_ensembles(hyper_parameters)
 final_predictions = vote_for_best(ensemble_results)
 print 'Final accuracy is', np.sum(np.argmax(final_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
-print "Sixth net is done."
+print "Seventh net is done."
