@@ -206,14 +206,19 @@ class ModelMaker(object):
     checkpoint = tm.time() - initial_time
     print 'Compiled in %s seconds' % round(checkpoint, 3)
 
-  def fit_data(self, X_train):
+  def fit_data(self, data_source):
     batch_history = LossHistory()
+
     if augment:
-      epoch_history = self.model.fit_generator(data_source.flow(X_train, y_train, batch_size=batch_size),
-        samples_per_epoch=len(X_train), nb_epoch=epoch_count, verbose=1,
-        show_accuracy=True, callbacks=[batch_history]) # val_loss requires a separate generator
-      last_loss = epoch_history.history['loss'][-1]
-      last_acc = epoch_history.history['acc'][-1]
+      generator = data_source[0]
+      val_data = data_source[1]
+      e_size = generator.epoch_size
+      train_generator = generator.flow(X_train, y_train, batch_size=batch_size)
+      val_generator = generator.flow(val_data[0], val_data[1], batch_size=batch_size)
+
+      epoch_history = self.model.fit_generator(train_generator, verbose=1,
+        samples_per_epoch=e_size, nb_epoch=epoch_count, show_accuracy=True,
+        callbacks=[batch_history], validation_data=val_generator)
     else:
       epoch_history = self.model.fit(X_train, y_train, batch_size=batch_size,
         nb_epoch=epoch_count, verbose=1, show_accuracy=True,
@@ -264,10 +269,8 @@ class CropGenerator(ImageDataGenerator):
     crops = np.array(crops)
     return crops
 
-  def fit(self,X,mode,rounds,seed,target_height=img_height,target_width=img_width):
+  def fit(self, X, mode, rounds, seed, target_height=96, target_width=96):
     X = np.copy(X)
-
-    print len(X)*rounds*2, "should be 1000"
     self.epoch_size = len(X)*rounds*2
 
     if self.featurewise_center:
@@ -284,19 +287,24 @@ class CropGenerator(ImageDataGenerator):
     for i in range(X.shape[0]):
       if mode == 'train':
         imgs = self.get_crops(X[i], target_height, target_width, Nrandoms=rounds)
-      elif mode == 'train':
+      elif mode == 'test':
         imgs = self.get_crops(X[i], target_height, target_width, deterministic=True)
         #image, target_height, target_width, Nrandoms=5, deterministic=False
       aX[i*rounds:i*rounds+rounds,:,:,:] = imgs
+
     X = aX
 
-def preprocess_data(X_train, augment, mode):
+def preprocess_data(X_train, y_train, augment, mode):
   if augment:
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
+    val_data = (X_val, y_val)
+
     generator = CropGenerator(featurewise_center=True, horizontal_flip=True)
     generator.fit(X_train, mode, rounds=10, seed=14)
+    data_source = [generator, val_data]
   else:
-    generator = X_train
-  return generator
+    data_source = None
+  return data_source
 
 class CrossValidator(object):
 
@@ -371,7 +379,7 @@ def generate_hyperparams(n_trials):
 def build_ensembles(hyperparams_list):
   ensemble_results = []
   solver = CrossValidator()
-  data_source = preprocess_data(X_train, augment, mode='train')
+  data_source = preprocess_data(X_train, y_train, augment, mode='train')
 
   for trial in range(n_trials):
     print '  '
