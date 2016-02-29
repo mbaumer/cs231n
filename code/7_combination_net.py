@@ -42,7 +42,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 
 train_level = 0
-augment = True
+augment = False
 
 if env == 'local':
   classes = 3
@@ -206,26 +206,22 @@ class ModelMaker(object):
     checkpoint = tm.time() - initial_time
     print 'Compiled in %s seconds' % round(checkpoint, 3)
 
-  def fit_data(self, data_source):
+  def fit_data(self, generator):
     batch_history = LossHistory()
 
     if augment:
-      generator = data_source[0]
-      val_data = data_source[1]
-      e_size = generator.epoch_size
-      train_generator = generator.flow(X_train, y_train, batch_size=batch_size)
-      val_generator = generator.flow(val_data[0], val_data[1], batch_size=batch_size)
-
-      epoch_history = self.model.fit_generator(train_generator, verbose=1,
-        samples_per_epoch=e_size, nb_epoch=epoch_count, show_accuracy=True,
-        callbacks=[batch_history], validation_data=val_generator)
+      epoch_history = self.model.fit_generator(generator.flow(X_train, y_train, batch_size=batch_size),
+        samples_per_epoch=generator.epoch_size, verbose=1, nb_epoch=epoch_count,
+        show_accuracy=True, callbacks=[batch_history])
+      last_loss = epoch_history.history['loss'][-1]
+      last_acc = epoch_history.history['acc'][-1]
     else:
       epoch_history = self.model.fit(X_train, y_train, batch_size=batch_size,
         nb_epoch=epoch_count, verbose=1, show_accuracy=True,
         callbacks=[batch_history], validation_split=0.2)
+      last_loss = epoch_history.history['val_loss'][-1]
+      last_acc = epoch_history.history['val_acc'][-1]
 
-    last_loss = epoch_history.history['val_loss'][-1]
-    last_acc = epoch_history.history['val_acc'][-1]
     print 'Last validation loss for this iteration is', round(last_loss,4)
     print 'Last validation accuracy is', round(last_acc,4)
 
@@ -281,30 +277,27 @@ class CropGenerator(ImageDataGenerator):
     #   X /= self.std
 
     # build an empty array of the appropriate size
-    if mode == 'test': rounds = 5
+    if mode == 'test': rounds=5
     aX = np.zeros((rounds*X.shape[0],X.shape[1],target_height,target_width))
-
     for i in range(X.shape[0]):
       if mode == 'train':
-        imgs = self.get_crops(X[i], target_height, target_width, Nrandoms=rounds)
-      elif mode == 'test':
-        imgs = self.get_crops(X[i], target_height, target_width, deterministic=True)
         #image, target_height, target_width, Nrandoms=5, deterministic=False
+        imgs = self.get_crops(X[i], target_height, target_width, Nrandoms=rounds)
+      else:
+        imgs = self.get_crops(X[i], target_height, target_width, deterministic=True)
       aX[i*rounds:i*rounds+rounds,:,:,:] = imgs
-
     X = aX
 
-def preprocess_data(X_train, y_train, augment, mode):
+def preprocess_data(X_train, augment, mode):
   if augment:
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
-    val_data = (X_val, y_val)
+    # X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
+    # val_data = (X_val, y_val)
 
     generator = CropGenerator(featurewise_center=True, horizontal_flip=True)
     generator.fit(X_train, mode, rounds=10, seed=14)
-    data_source = [generator, val_data]
   else:
-    data_source = None
-  return data_source
+    generator = None
+  return generator
 
 class CrossValidator(object):
 
@@ -360,9 +353,28 @@ class CrossValidator(object):
       self.best_model_params = {'learning_rate': maker.learning_rate,
         'reg_strength': maker.reg_strength, 'dropout_prob': maker.dropout_prob}
 
-      self.batch_histories.append(maker.batch_history.losses)
-      self.epoch_histories.append(maker.epoch_history.history['val_loss'])
-      self.epoch_acc_histories.append(maker.epoch_history.history['val_acc'])
+    self.batch_histories.append(maker.batch_history.losses)
+    self.epoch_histories.append(maker.epoch_history.history['val_loss'])
+    self.epoch_acc_histories.append(maker.epoch_history.history['val_acc'])
+
+  def up_aug(self,maker,iteration):
+    if iteration == 0:
+      print 'First iteration; saving model'
+      self.best_model = copy(maker.model)
+      self.best_val_loss = maker.epoch_history.history['loss'][-1]
+      self.best_model_params = {'learning_rate': maker.learning_rate,
+       'reg_strength': maker.reg_strength, 'dropout_prob': maker.dropout_prob}
+
+    elif maker.epoch_history.history['loss'][-1] < self.best_val_loss:
+      print 'I think this current model is better: Im saving it.'
+      self.best_model = copy(maker.model)
+      self.best_val_loss = maker.epoch_history.history['loss'][-1]
+      self.best_model_params = {'learning_rate': maker.learning_rate,
+        'reg_strength': maker.reg_strength, 'dropout_prob': maker.dropout_prob}
+
+    self.batch_histories.append(maker.batch_history.losses)
+    self.epoch_histories.append(maker.epoch_history.history['loss'])
+    self.epoch_acc_histories.append(maker.epoch_history.history['acc'])
 
 def print_accuracy(predictions):
   print "Test Accuracy:"
@@ -379,7 +391,7 @@ def generate_hyperparams(n_trials):
 def build_ensembles(hyperparams_list):
   ensemble_results = []
   solver = CrossValidator()
-  data_source = preprocess_data(X_train, y_train, augment, mode='train')
+  data_source = preprocess_data(X_train,  augment, mode='train')
 
   for trial in range(n_trials):
     print '  '
@@ -389,7 +401,7 @@ def build_ensembles(hyperparams_list):
     maker.compile_model()
     maker.fit_data(data_source)
 
-    solver.update(maker,trial)
+    solver.up_aug(maker, trial) if augment else solver.update(maker,trial)
     test_predictions = maker.model.predict(X_test, batch_size=batch_size)
     print_accuracy(test_predictions)
     solver.plot(trial)
