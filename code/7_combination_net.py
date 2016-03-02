@@ -23,7 +23,7 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-env = 'local'
+env = 'remote'
 if env == 'local':
   path = '/Users/derekchen/Documents/conv_nets/cs231n'
   weights_path = path+'/data/vgg16_weights.h5'
@@ -57,7 +57,7 @@ elif env == 'remote':
   classes = 20
   rates = [7.4e-5, 4.2e-5, 1.2e-5, 7.4e-6, 4.4e-6]
   n_trials = 25
-  epoch_count = 14
+  epoch_count = 2
   img_width, img_height = 224, 224
   batch_size = 32
 
@@ -404,6 +404,7 @@ def build_ensembles(hyperparams_list):
     solver.up_aug(maker, trial) if augment else solver.update(maker,trial)
     test_predictions = maker.model.predict(X_test, batch_size=batch_size)
     print_accuracy(test_predictions)
+    maker.model = None
     solver.plot(trial)
     ensemble_results.append(test_predictions)
 
