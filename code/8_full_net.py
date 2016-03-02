@@ -25,8 +25,8 @@ import matplotlib.pyplot as plt
 
 env = 'local'
 if env == 'local':
-  path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
-  #path = '/Users/derekchen/Documents/conv_nets/cs231n'
+  # path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
+  path = '/Users/derekchen/Documents/conv_nets/cs231n'
   weights_path = path+'/data/vgg16_weights.h5'
   training_input = path+'/data/X.npy'
   training_output = path+'/data/Y.npy'
@@ -51,6 +51,7 @@ if env == 'local':
   n_trials = 3
   epoch_count = 3
   img_width, img_height = 128, 128
+  target_w, target_h = 96, 96
   X_train, X_test = X_train[:50,:,:,:], X_test[:50,:,:,:]
   y_train, y_test = y_train[:50,:], y_test[:50,:]
   batch_size = 20
@@ -59,13 +60,9 @@ elif env == 'remote':
   rates = [7.4e-5, 4.2e-5, 1.2e-5, 7.4e-6, 4.4e-6]
   n_trials = 25
   epoch_count = 14
-  img_width, img_height = 224, 224
+  img_width, img_height = 256, 256
+  target_w, target_h = 224, 224
   batch_size = 32
-
-  #if we're augmenting, need to split out val set by hand.
-if augment:
-  X_train2, X_val, y_train2, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
-  #y_train2, y_val = [np_utils.to_categorical(x,classes) for x in (y_train2, y_val)]
 
 class LossHistory(Callback):
   def on_train_begin(self, logs={}):
@@ -96,7 +93,7 @@ class ModelMaker(object):
     #         2: train FC layers and last 6 conv layers
 
     model = Sequential()
-    model.add(ZeroPadding2D((1, 1), input_shape=(3, 96, 96)))
+    model.add(ZeroPadding2D((1, 1), input_shape=(3, target_h, target_w)))
     model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1'))
     model.add(ZeroPadding2D((1, 1)))
     model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
@@ -271,8 +268,11 @@ class CropGenerator(ImageDataGenerator):
     crops = np.array(crops)
     return crops
 
-  def fit(self, X, mode, rounds, seed=42, target_height=96, target_width=96):
+  def fit(self, X, mode, rounds, seed=42, target_h=target_h, target_w=target_w):
     X = np.copy(X)
+
+    print len(X)
+    print rounds
     self.epoch_size = len(X)*rounds*2
 
     if self.featurewise_center:
@@ -285,13 +285,13 @@ class CropGenerator(ImageDataGenerator):
     # build an empty array of the appropriate size
     if augment:
       if mode == 'test': rounds=5
-      aX = np.zeros((rounds*X.shape[0],X.shape[1],target_height,target_width))
+      aX = np.zeros((rounds*X.shape[0],X.shape[1],target_h,target_w))
       for i in range(X.shape[0]):
         if mode == 'train':
           #image, target_height, target_width, Nrandoms=5, deterministic=False
-          imgs = self.get_crops(X[i], target_height, target_width, Nrandoms=rounds)
+          imgs = self.get_crops(X[i], target_h, target_w, Nrandoms=rounds)
         else:
-          imgs = self.get_crops(X[i], target_height, target_width, deterministic=True)
+          imgs = self.get_crops(X[i], target_h, target_w, deterministic=True)
         aX[i*rounds:i*rounds+rounds,:,:,:] = imgs
       X = aX
     return X
@@ -303,7 +303,7 @@ def preprocess_data(data_in, mode):
   if mode == 'train':
     #return generator
     return X
-  else: 
+  else:
     return X
 
 class CrossValidator(object):
@@ -364,7 +364,7 @@ class CrossValidator(object):
     self.epoch_histories.append(maker.epoch_history.history['val_loss'])
     self.epoch_acc_histories.append(maker.epoch_history.history['val_acc'])
 
-def print_accuracy(predictions):
+def print_accuracy(predictions, y_test):
   print "Test Accuracy:"
   y_hat = np.argmax(predictions,axis=1)
   y_actual = np.argmax(y_test,axis=1)
@@ -386,6 +386,8 @@ def build_ensembles(hyperparams_list):
     X_val_aug = preprocess_data(X_val,mode='test')
     y_val_aug = np.repeat(y_val,5,axis=0)
     val_data = (X_val_aug,y_val_aug)
+    X_test_aug = preprocess_data(X_test,mode='test')
+    y_test_aug = np.repeat(y_test,5,axis=0)
     print val_data[0].shape, val_data[1].shape
     print X_train2.shape, y_train2.shape
   else:
@@ -394,6 +396,9 @@ def build_ensembles(hyperparams_list):
 
   solver = CrossValidator()
   # data_source = preprocess_data(X_train, mode='train')
+
+  print X_test_aug.shape
+  print y_test_aug.shape
 
   for trial in range(n_trials):
     print '  '
@@ -404,8 +409,14 @@ def build_ensembles(hyperparams_list):
     maker.fit_data()
 
     solver.update(maker,trial)
-    test_predictions = maker.model.predict(X_test, batch_size=batch_size)
-    print_accuracy(test_predictions)
+    print X_test.shape
+    print y_test.shape
+    if augment:
+      test_predictions = maker.model.predict(X_test_aug, batch_size=batch_size)
+      print_accuracy(test_predictions, y_test_aug)
+    else:
+      test_predictions = maker.model.predict(X_test, batch_size=batch_size)
+      print_accuracy(test_predictions, y_test)
     solver.plot(trial)
     ensemble_results.append(test_predictions)
 
@@ -427,8 +438,13 @@ def vote_for_best(results):
     predictions[i, answers[i]] = 1.
   return predictions
 
+  #if we're augmenting, need to split out val set by hand.
+if augment:
+  X_train2, X_val, y_train2, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
+
 hyperparams_list = generate_hyperparams(n_trials)
 ensemble_results = build_ensembles(hyperparams_list)
 final_predictions = vote_for_best(ensemble_results)
 print 'Final accuracy is', np.sum(np.argmax(final_predictions,axis=1) == np.argmax(y_test,axis=1))/X_test.shape[0]
-print "Seventh net is done."
+print "Eighth net is done."
