@@ -318,6 +318,7 @@ class CrossValidator(object):
 
   def plot(self, trial):
     # trl = str(trial)
+    trl = trial
 
     plt.figure()
     plt.xlabel('Batch Number')
@@ -397,8 +398,9 @@ def build_ensembles(hyperparams_list):
   solver = CrossValidator()
   # data_source = preprocess_data(X_train, mode='train')
 
-  print X_test_aug.shape
-  print y_test_aug.shape
+  if augment:
+    print X_test_aug.shape
+    print y_test_aug.shape
 
   for trial in range(n_trials):
     print '  '
