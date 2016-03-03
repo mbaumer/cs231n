@@ -317,7 +317,7 @@ class CrossValidator(object):
     self.best_model_params = {}
 
   def plot(self, trial):
-    trl = str(trial)
+    # trl = str(trial)
 
     plt.figure()
     plt.xlabel('Batch Number')
@@ -417,10 +417,10 @@ def build_ensembles(hyperparams_list):
     else:
       test_predictions = maker.model.predict(X_test, batch_size=batch_size)
       print_accuracy(test_predictions, y_test)
-    solver.plot(trial)
+    # solver.plot(trial)
     ensemble_results.append(test_predictions)
 
-  solver.plot()
+  solver.plot('Mar2')
 
   return ensemble_results
 
