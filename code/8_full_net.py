@@ -23,7 +23,7 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-env = 'local'
+env = 'remote'
 if env == 'local':
   # path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
   path = '/Users/derekchen/Documents/conv_nets/cs231n'
@@ -43,7 +43,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 
 train_level = 0
-augment = True
+augment = False
 
 if env == 'local':
   classes = 3
@@ -58,8 +58,8 @@ if env == 'local':
 elif env == 'remote':
   classes = 20
   rates = [7.4e-5, 4.2e-5, 1.2e-5, 7.4e-6, 4.4e-6]
-  n_trials = 25
-  epoch_count = 14
+  n_trials = 20
+  epoch_count = 2
   img_width, img_height = 256, 256
   target_w, target_h = 224, 224
   batch_size = 32
@@ -318,7 +318,7 @@ class CrossValidator(object):
 
   def plot(self, trial):
     # trl = str(trial)
-    trl = trial
+    trl = tria
 
     plt.figure()
     plt.xlabel('Batch Number')
@@ -372,9 +372,9 @@ def print_accuracy(predictions, y_test):
   print np.sum(y_hat == y_actual)/X_test.shape[0]
 
 def generate_hyperparams(n_trials):
-  learning_rates = 10**np.random.uniform(-6,-3,n_trials).astype('float32')
-  reg_strengths = 10**np.random.uniform(-7,0,n_trials).astype('float32')
-  dropout_probs = np.random.uniform(0.1,0.8,n_trials).astype('float32')
+  learning_rates = 10**np.random.uniform(-4,-3,n_trials).astype('float32')
+  reg_strengths = 10**np.random.uniform(-5,-2,n_trials).astype('float32')
+  dropout_probs = np.random.uniform(0.3,0.5,n_trials).astype('float32')
   return zip(learning_rates,reg_strengths,dropout_probs)
 
 def build_ensembles(hyperparams_list):
@@ -392,7 +392,7 @@ def build_ensembles(hyperparams_list):
     print val_data[0].shape, val_data[1].shape
     print X_train2.shape, y_train2.shape
   else:
-    train_gen = None
+    train_data = None
     val_data = None
 
   solver = CrossValidator()
