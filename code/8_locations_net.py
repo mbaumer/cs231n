@@ -23,7 +23,7 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-env = 'local'
+env = 'remote'
 if env == 'local':
   path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
   #path = '/Users/derekchen/Documents/conv_nets/cs231n'
@@ -32,8 +32,8 @@ if env == 'local':
   training_output = path+'/data/Y.npy'
 elif env == 'remote':
   weights_path = '/data/vgg16_weights.h5'
-  training_input = '/data/X_artists.npy'
-  training_output = '/data/Y_artists.npy'
+  training_input = '/data/X_locations96.npy'
+  training_output = '/data/Y_locations96.npy'
 
 
 X = np.load(training_input).astype('float32')
@@ -56,11 +56,11 @@ if env == 'local':
   y_train, y_test = y_train[:50,:], y_test[:50,:]
   batch_size = 20
 elif env == 'remote':
-  classes = 20
+  classes = 13
   n_trials = 20
-  epoch_count = 4
-  img_width, img_height = 256, 256
-  target_w, target_h = 224, 224
+  epoch_count = 2
+  img_width, img_height = 96, 96
+  target_w, target_h = 96, 96
   batch_size = 32
 
 class LossHistory(Callback):
@@ -226,7 +226,7 @@ class ModelMaker(object):
     last_acc = epoch_history.history['val_acc'][-1]
     print 'Last validation loss for this iteration is', round(last_loss,4)
     print 'Last validation accuracy is', round(last_acc,4)
-    self.model.save_weights(path+'/data/MikeDerekNet.h5',overwrite=True)
+    #self.model.save_weights(path+'/data/MikeDerekNet_locations.h5',overwrite=True)
     self.batch_history = batch_history
     self.epoch_history = epoch_history
 
@@ -371,12 +371,9 @@ def print_accuracy(predictions, y_test):
   print np.sum(y_hat == y_actual)/X_test.shape[0]
 
 def generate_hyperparams(n_trials):
-  # learning_rates = 10**np.random.uniform(-4,-3,n_trials).astype('float32')
-  # dropout_probs = np.random.uniform(0.3,0.5,n_trials).astype('float32')
-  n_trials = 4
-  learning_rates = [0.001, 0.0009, 0.0007, 0.0005]
+  learning_rates = 10**np.random.uniform(-4,-3,n_trials).astype('float32')
   reg_strengths = 10**np.random.uniform(-5,-4,n_trials).astype('float32')
-  dropout_probs = [0.4, 0.4, 0.4, 0.4]
+  dropout_probs = np.random.uniform(0.3,0.5,n_trials).astype('float32')
   return zip(learning_rates,reg_strengths,dropout_probs)
 
 def build_ensembles(hyperparams_list):
