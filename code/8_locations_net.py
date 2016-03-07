@@ -23,7 +23,7 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-env = 'local'
+env = 'remote'
 if env == 'local':
   path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
   #path = '/Users/derekchen/Documents/conv_nets/cs231n'
@@ -32,8 +32,8 @@ if env == 'local':
   training_output = path+'/data/Y.npy'
 elif env == 'remote':
   weights_path = '/data/vgg16_weights.h5'
-  training_input = '/data/X_artists.npy'
-  training_output = '/data/Y_artists.npy'
+  training_input = '/data/X_locations96.npy'
+  training_output = '/data/Y_locations96.npy'
 
 
 X = np.load(training_input).astype('float32')
@@ -56,11 +56,11 @@ if env == 'local':
   y_train, y_test = y_train[:50,:], y_test[:50,:]
   batch_size = 20
 elif env == 'remote':
-  classes = 20
+  classes = 13
   n_trials = 20
-  epoch_count = 4
-  img_width, img_height = 256, 256
-  target_w, target_h = 224, 224
+  epoch_count = 2
+  img_width, img_height = 96, 96
+  target_w, target_h = 96, 96
   batch_size = 32
 
 class LossHistory(Callback):
