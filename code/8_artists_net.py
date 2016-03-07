@@ -425,7 +425,7 @@ def build_ensembles(hyperparams_list):
     # solver.plot(trial)
     ensemble_results.append(test_predictions)
 
-  solver.plot('Mar2')
+  solver.plot('Mar7')
 
   return ensemble_results
 

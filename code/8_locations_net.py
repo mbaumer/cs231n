@@ -416,8 +416,9 @@ def build_ensembles(hyperparams_list):
       test_predictions = maker.model.predict(X_test_aug, batch_size=batch_size)
       print_accuracy(test_predictions, y_test_aug)
     else:
-      test_predictions = maker.model.predict(X_test, batch_size=batch_size)
-      print_accuracy(test_predictions, y_test)
+      test_predictions = 14
+      # test_predictions = maker.model.predict(X_test, batch_size=batch_size)
+      # print_accuracy(test_predictions, y_test)
     # solver.plot(trial)
     ensemble_results.append(test_predictions)
 
