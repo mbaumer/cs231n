@@ -165,7 +165,7 @@ class ModelMaker(object):
       isBatchNorm = (type(model.layers[k]) == type(BatchNormalization()))
       if isActivation | isBatchNorm:
         skipped += 1
-        print 'skipping'
+        # print 'skipping'
         continue #skip activation layers
       g = f['layer_{}'.format(k-skipped)]
       # print g.keys()
@@ -373,10 +373,10 @@ def print_accuracy(predictions, y_test):
 def generate_hyperparams(n_trials):
   # learning_rates = 10**np.random.uniform(-4,-3,n_trials).astype('float32')
   # dropout_probs = np.random.uniform(0.3,0.5,n_trials).astype('float32')
-  n_trials = 4
-  learning_rates = [0.001, 0.0009, 0.0007, 0.0005]
+  n_trials = 5
+  learning_rates = [0.0006, 0.0003, 0.00009, 0.00006, 0.00003]
   reg_strengths = 10**np.random.uniform(-5,-4,n_trials).astype('float32')
-  dropout_probs = [0.4, 0.4, 0.4, 0.4]
+  dropout_probs = [0.4, 0.4, 0.4, 0.4, 0.4]
   return zip(learning_rates,reg_strengths,dropout_probs)
 
 def build_ensembles(hyperparams_list):
