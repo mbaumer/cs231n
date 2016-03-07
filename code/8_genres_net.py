@@ -227,7 +227,7 @@ class ModelMaker(object):
     last_acc = epoch_history.history['val_acc'][-1]
     print 'Last validation loss for this iteration is', round(last_loss,4)
     print 'Last validation accuracy is', round(last_acc,4)
-    self.model.save_weights(path+'/data/MikeDerekNet.h5',overwrite=True)
+    #self.model.save_weights(path+'/data/MikeDerekNet.h5',overwrite=True)
     self.batch_history = batch_history
     self.epoch_history = epoch_history
 
