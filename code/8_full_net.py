@@ -23,10 +23,10 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-env = 'remote'
+env = 'local'
 if env == 'local':
-  # path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
-  path = '/Users/derekchen/Documents/conv_nets/cs231n'
+  path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
+  #path = '/Users/derekchen/Documents/conv_nets/cs231n'
   weights_path = path+'/data/vgg16_weights.h5'
   training_input = path+'/data/X.npy'
   training_output = path+'/data/Y.npy'
@@ -49,9 +49,9 @@ if env == 'local':
   classes = 3
   rates = [7.4e-5, 1.2e-5, 4.4e-6]
   n_trials = 3
-  epoch_count = 3
+  epoch_count = 1
   img_width, img_height = 128, 128
-  target_w, target_h = 96, 96
+  target_w, target_h = 128, 128
   X_train, X_test = X_train[:50,:,:,:], X_test[:50,:,:,:]
   y_train, y_test = y_train[:50,:], y_test[:50,:]
   batch_size = 20
@@ -227,7 +227,7 @@ class ModelMaker(object):
     last_acc = epoch_history.history['val_acc'][-1]
     print 'Last validation loss for this iteration is', round(last_loss,4)
     print 'Last validation accuracy is', round(last_acc,4)
-
+    self.model.save_weights(path+'/data/MikeDerekNet.h5',overwrite=True)
     self.batch_history = batch_history
     self.epoch_history = epoch_history
 
