@@ -1,9 +1,21 @@
+from keras import backend as K
 from keras.models import Sequential
-from keras.layers import Convolution2D, ZeroPadding2D, MaxPooling2D
-
-img_width, img_height = 96, 96
+from keras.optimizers import SGD, Adam
+from keras.layers.core import Dense, Dropout, Activation, Flatten
+from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
+from keras.layers.normalization import BatchNormalization
+from keras.regularizers import l2
+from keras.callbacks import Callback
+from keras.preprocessing.image import ImageDataGenerator
+import h5py
+from sklearn.cross_validation import train_test_split
+from keras.utils import np_utils, generic_utils
+import numpy as np
+env='remote'
+img_width, img_height = 224, 224
 train_level = 0
-
+classes = 20
+step = 1
 # this will contain our generated images
 input_img = K.placeholder((1, 3, img_width, img_height))
 
@@ -63,26 +75,29 @@ model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 model.add(Flatten())
 # Note: Keras does automatic shape inference.
 
+reg_strength = 8e-4
+dropout_prob = 0.4
+
 if env == 'local':
-model.add(Dense(256,name='dense_1',init='he_normal',W_regularizer=l2(self.reg_strength)))
-model.add(Activation('relu'))
-model.add(Dropout(self.dropout_prob,name='dropout_1'))
+  model.add(Dense(256,name='dense_1',init='he_normal',W_regularizer=l2(reg_strength)))
+  model.add(Activation('relu'))
+  model.add(Dropout(dropout_prob,name='dropout_1'))
 
 if env == 'remote':
-model.add(Dense(4096,name='dense_1',init='he_normal',W_regularizer=l2(self.reg_strength)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Dropout(self.dropout_prob,name='dropout_1'))
+  model.add(Dense(4096,name='dense_1',init='he_normal',W_regularizer=l2(reg_strength)))
+  model.add(BatchNormalization())
+  model.add(Activation('relu'))
+  model.add(Dropout(dropout_prob,name='dropout_1'))
 
-model.add(Dense(4096,name='dense_2',init='he_normal',W_regularizer=l2(self.reg_strength)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Dropout(self.dropout_prob,name='dropout_2'))
+  model.add(Dense(4096,name='dense_2',init='he_normal',W_regularizer=l2(reg_strength)))
+  model.add(BatchNormalization())
+  model.add(Activation('relu'))
+  model.add(Dropout(dropout_prob,name='dropout_2'))
 
-model.add(Dense(1000,name='dense_3',init='he_normal',W_regularizer=l2(self.reg_strength)))
+model.add(Dense(1000,name='dense_3',init='he_normal',W_regularizer=l2(reg_strength)))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
-model.add(Dropout(self.dropout_prob,name='dropout_3'))
+model.add(Dropout(dropout_prob,name='dropout_3'))
 
 model.add(Dense(classes))
 model.add(Activation('softmax'))
@@ -91,7 +106,7 @@ model.add(Activation('softmax'))
 layer_dict = dict([(layer.name, layer) for layer in model.layers])
 
 # Load the weights from our dropbox folder (about 0.5 GB worth) --------------------------
-weights_path = 'MikeDerekNet.h5' #will eventually be our new pre-trained weights
+weights_path = 'bestArtistWeights.h5' #will eventually be our new pre-trained weights
 
 f = h5py.File(weights_path)
 for k in range(f.attrs['nb_layers']):
