@@ -31,6 +31,7 @@ if env == 'local':
   training_input = path+'/data/X.npy'
   training_output = path+'/data/Y.npy'
 elif env == 'remote':
+  path = ''
   weights_path = '/data/vgg16_weights.h5'
   training_input = '/data/X_artists.npy'
   training_output = '/data/Y_artists.npy'
