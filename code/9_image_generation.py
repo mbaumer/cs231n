@@ -122,7 +122,7 @@ print('Model loaded.')
 
 from keras import backend as K
 
-output_index = 0 #whatever class we want to target
+output_index = 15 #whatever class we want to target
 
 layer_output = model.layers[-2].get_output()
 loss = K.mean(layer_output[:,output_index])
@@ -138,7 +138,7 @@ iterate = K.function([input_img], [loss, grads])
 
 input_img_data = np.random.random((1, 3, img_width, img_height)) * 20 + 128.
 # run gradient ascent for 20 steps
-for i in range(20):
+for i in range(100):
     loss_value, grads_value = iterate([input_img_data])
     input_img_data += grads_value * step
 
