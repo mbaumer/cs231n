@@ -57,8 +57,8 @@ if env == 'local':
   batch_size = 20
 elif env == 'remote':
   classes = 20
-  n_trials = 20
-  epoch_count = 4
+  n_trials = 10
+  epoch_count = 7
   img_width, img_height = 256, 256
   target_w, target_h = 224, 224
   batch_size = 32
@@ -165,7 +165,7 @@ class ModelMaker(object):
       isBatchNorm = (type(model.layers[k]) == type(BatchNormalization()))
       if isActivation | isBatchNorm:
         skipped += 1
-        print 'skipping'
+        # print 'skipping'
         continue #skip activation layers
       g = f['layer_{}'.format(k-skipped)]
       # print g.keys()
@@ -372,11 +372,11 @@ def print_accuracy(predictions, y_test):
 
 def generate_hyperparams(n_trials):
   # learning_rates = 10**np.random.uniform(-4,-3,n_trials).astype('float32')
+  # reg_strengths = 10**np.random.uniform(-5,-4,4).astype('float32')
   # dropout_probs = np.random.uniform(0.3,0.5,n_trials).astype('float32')
-  n_trials = 4
-  learning_rates = [0.001, 0.0009, 0.0007, 0.0005]
-  reg_strengths = 10**np.random.uniform(-5,-4,n_trials).astype('float32')
-  dropout_probs = [0.4, 0.4, 0.4, 0.4]
+  learning_rates = [0.00017, 0.0001, 5.8e-5, 3e-5, 1.7e-5, 0.00017, 0.0001, 5.8e-5, 3e-5, 1.7e-5]
+  reg_strengths = [0.0008, 0.0008, 0.0008, 0.0008, 0.0008, 0.0008, 0.0008, 0.0008, 0.0008, 0.0008]
+  dropout_probs = [0.4, 0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5]
   return zip(learning_rates,reg_strengths,dropout_probs)
 
 def build_ensembles(hyperparams_list):
@@ -419,12 +419,13 @@ def build_ensembles(hyperparams_list):
       test_predictions = maker.model.predict(X_test_aug, batch_size=batch_size)
       print_accuracy(test_predictions, y_test_aug)
     else:
-      test_predictions = maker.model.predict(X_test, batch_size=batch_size)
-      print_accuracy(test_predictions, y_test)
+      test_predictions = 14
+      # test_predictions = maker.model.predict(X_test, batch_size=batch_size)
+      # print_accuracy(test_predictions, y_test)
     # solver.plot(trial)
     ensemble_results.append(test_predictions)
 
-  solver.plot('Mar2')
+  solver.plot('Mar7')
 
   return ensemble_results
 

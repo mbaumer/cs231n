@@ -58,8 +58,8 @@ if env == 'local':
 elif env == 'remote':
   classes = 6
   # rates = [7.4e-5, 4.2e-5, 1.2e-5, 7.4e-6, 4.4e-6]
-  n_trials = 20
-  epoch_count = 2
+  n_trials = 2
+  epoch_count = 10
   img_width, img_height = 96, 96
   target_w, target_h = 96, 96
   batch_size = 32
@@ -166,7 +166,7 @@ class ModelMaker(object):
       isBatchNorm = (type(model.layers[k]) == type(BatchNormalization()))
       if isActivation | isBatchNorm:
         skipped += 1
-        print 'skipping'
+        # print 'skipping'
         continue #skip activation layers
       g = f['layer_{}'.format(k-skipped)]
       # print g.keys()
@@ -318,7 +318,7 @@ class CrossValidator(object):
 
   def plot(self, trial):
     # trl = str(trial)
-    trl = tria
+    trl = trial
 
     plt.figure()
     plt.xlabel('Batch Number')
@@ -372,9 +372,12 @@ def print_accuracy(predictions, y_test):
   print np.sum(y_hat == y_actual)/X_test.shape[0]
 
 def generate_hyperparams(n_trials):
-  learning_rates = 10**np.random.uniform(-5,-3,n_trials).astype('float32')
-  reg_strengths = 10**np.random.uniform(-5,-2,n_trials).astype('float32')
-  dropout_probs = np.random.uniform(0.3,0.5,n_trials).astype('float32')
+  # learning_rates = 10**np.random.uniform(-5,-3,n_trials).astype('float32')
+  # reg_strengths = 10**np.random.uniform(-5,-2,n_trials).astype('float32')
+  # dropout_probs = np.random.uniform(0.3,0.5,n_trials).astype('float32')
+  learning_rates = [1.1e-5, 1.1e-5]
+  reg_strengths = [0.001, 0.004]
+  dropout_probs = [0.35, 0.35]
   return zip(learning_rates,reg_strengths,dropout_probs)
 
 def build_ensembles(hyperparams_list):
@@ -417,8 +420,9 @@ def build_ensembles(hyperparams_list):
       test_predictions = maker.model.predict(X_test_aug, batch_size=batch_size)
       print_accuracy(test_predictions, y_test_aug)
     else:
-      test_predictions = maker.model.predict(X_test, batch_size=batch_size)
-      print_accuracy(test_predictions, y_test)
+      test_predictions = 14
+      # test_predictions = maker.model.predict(X_test, batch_size=batch_size)
+      # print_accuracy(test_predictions, y_test)
     # solver.plot(trial)
     ensemble_results.append(test_predictions)
 
