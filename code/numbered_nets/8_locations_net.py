@@ -58,7 +58,7 @@ if env == 'local':
 elif env == 'remote':
   classes = 13
   n_trials = 20
-  epoch_count = 2
+  epoch_count = 7
   img_width, img_height = 96, 96
   target_w, target_h = 96, 96
   batch_size = 32
@@ -165,7 +165,7 @@ class ModelMaker(object):
       isBatchNorm = (type(model.layers[k]) == type(BatchNormalization()))
       if isActivation | isBatchNorm:
         skipped += 1
-        print 'skipping'
+        # print 'skipping'
         continue #skip activation layers
       g = f['layer_{}'.format(k-skipped)]
       # print g.keys()

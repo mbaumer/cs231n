@@ -6,11 +6,14 @@ from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras.callbacks import Callback
-from keras.preprocessing.image import ImageDataGenerator
+# from keras.utils import np_utils, generic_utils
+
 import h5py
 from sklearn.cross_validation import train_test_split
-from keras.utils import np_utils, generic_utils
 import numpy as np
+from scipy.misc import imsave
+
+
 env='remote'
 img_width, img_height = 224, 224
 train_level = 0
@@ -120,8 +123,6 @@ f.close()
 print('Model loaded.')
 
 
-from keras import backend as K
-
 output_index = 15 #whatever class we want to target
 
 layer_output = model.layers[-2].get_output()
@@ -137,12 +138,12 @@ grads /= (K.sqrt(K.mean(K.square(grads))) + 1e-5)
 iterate = K.function([input_img], [loss, grads])
 
 input_img_data = np.random.random((1, 3, img_width, img_height)) * 20 + 128.
+
 # run gradient ascent for 20 steps
 for i in range(100):
     loss_value, grads_value = iterate([input_img_data])
     input_img_data += grads_value * step
 
-from scipy.misc import imsave
 
 # util function to convert a tensor into a valid image
 def deprocess_image(x):
