@@ -43,7 +43,7 @@ X -= np.mean(X,axis=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 
-train_level = 0
+train_level = 1
 augment = False
 
 if env == 'local':
@@ -59,7 +59,7 @@ if env == 'local':
 elif env == 'remote':
   classes = 20
   n_trials = 1
-  epoch_count = 3
+  epoch_count = 10
   img_width, img_height = 256, 256
   target_w, target_h = 224, 224
   batch_size = 32
@@ -136,15 +136,15 @@ class ModelMaker(object):
           layer.trainable = False
 
       model.add(ZeroPadding2D((1, 1)))
-      model.add(Convolution2D(512, 3, 3, name='conv5_1'))
+      model.add(Convolution2D(512, 3, 3, name='conv5_1', W_regularizer=l2(self.reg_strength)))
       if train_level == 1: model.add(BatchNormalization())
       model.add(Activation('relu'))
       model.add(ZeroPadding2D((1, 1)))
-      model.add(Convolution2D(512, 3, 3, name='conv5_2'))
+      model.add(Convolution2D(512, 3, 3, name='conv5_2', W_regularizer=l2(self.reg_strength)))
       if train_level == 1: model.add(BatchNormalization())
       model.add(Activation('relu'))
       model.add(ZeroPadding2D((1, 1)))
-      model.add(Convolution2D(512, 3, 3, name='conv5_3'))
+      model.add(Convolution2D(512, 3, 3, name='conv5_3', W_regularizer=l2(self.reg_strength)))
       if train_level == 1: model.add(BatchNormalization())
       model.add(Activation('relu'))
       model.add(MaxPooling2D((2, 2), strides=(2, 2)))
@@ -227,7 +227,7 @@ class ModelMaker(object):
     last_acc = epoch_history.history['val_acc'][-1]
     print 'Last validation loss for this iteration is', round(last_loss,4)
     print 'Last validation accuracy is', round(last_acc,4)
-    self.model.save_weights(path+'/data/bestArtistWeights.h5',overwrite=True)
+    self.model.save_weights(path+'bestArtistWeights.h5',overwrite=True)
     self.batch_history = batch_history
     self.epoch_history = epoch_history
 
