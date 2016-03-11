@@ -23,7 +23,7 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-env = 'remote'
+env = 'local'
 if env == 'local':
   # path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
   path = '/Users/derekchen/Documents/conv_nets/cs231n'
@@ -45,6 +45,10 @@ y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 
 train_level = 1
 augment = False
+learning_ratesTOP = [1e-5, 5e-6, 1e-6] #[0.001, 0.0009, 0.0007, 0.0005]
+reg_strengthsTOP = [8e-4, 8e-4, 8e-4]#10**np.random.uniform(-5,-4,n_trials).astype('float32')
+dropout_probsTOP = [0.4, 0.4, 0.4]
+
 
 if env == 'local':
   classes = 3
@@ -58,7 +62,7 @@ if env == 'local':
   batch_size = 20
 elif env == 'remote':
   classes = 20
-  n_trials = 1
+  n_trials = 3
   epoch_count = 10
   img_width, img_height = 256, 256
   target_w, target_h = 224, 224
@@ -114,8 +118,8 @@ class ModelMaker(object):
       model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
       model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
-      for layer in model.layers:
-        layer.trainable = False
+      # for layer in model.layers:
+      #   layer.trainable = False
 
       model.add(ZeroPadding2D((1, 1)))
       model.add(Convolution2D(512, 3, 3, name='conv4_1'))
@@ -131,27 +135,27 @@ class ModelMaker(object):
       model.add(Activation('relu',name='relu_3'))
       model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
-      if train_level < 2:
-        for layer in model.layers:
-          layer.trainable = False
+      # if train_level < 2:
+      for layer in model.layers:
+        layer.trainable = False
 
       model.add(ZeroPadding2D((1, 1)))
-      model.add(Convolution2D(512, 3, 3, name='conv5_1', W_regularizer=l2(self.reg_strength)))
+      model.add(Convolution2D(512, 3, 3, name='conv5_1', W_regularizer=l2(0.001)))
       if train_level == 1: model.add(BatchNormalization())
       model.add(Activation('relu'))
       model.add(ZeroPadding2D((1, 1)))
-      model.add(Convolution2D(512, 3, 3, name='conv5_2', W_regularizer=l2(self.reg_strength)))
+      model.add(Convolution2D(512, 3, 3, name='conv5_2', W_regularizer=l2(0.001)))
       if train_level == 1: model.add(BatchNormalization())
       model.add(Activation('relu'))
       model.add(ZeroPadding2D((1, 1)))
-      model.add(Convolution2D(512, 3, 3, name='conv5_3', W_regularizer=l2(self.reg_strength)))
+      model.add(Convolution2D(512, 3, 3, name='conv5_3', W_regularizer=l2(0.001)))
       if train_level == 1: model.add(BatchNormalization())
       model.add(Activation('relu'))
       model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
-      if train_level < 1:
-        for layer in model.layers:
-          layer.trainable = False
+      # if train_level < 1:
+      #   for layer in model.layers:
+      #     layer.trainable = False
 
     # get the symbolic outputs of each "key" layer (we gave them unique names).
     layer_dict = dict([(layer.name, layer) for layer in model.layers])
@@ -166,7 +170,7 @@ class ModelMaker(object):
       isBatchNorm = (type(model.layers[k]) == type(BatchNormalization()))
       if isActivation | isBatchNorm:
         skipped += 1
-        print 'skipping'
+        # print 'skipping'
         continue #skip activation layers
       g = f['layer_{}'.format(k-skipped)]
       # print g.keys()
@@ -374,10 +378,9 @@ def print_accuracy(predictions, y_test):
 def generate_hyperparams(n_trials):
   # learning_rates = 10**np.random.uniform(-4,-3,n_trials).astype('float32')
   # dropout_probs = np.random.uniform(0.3,0.5,n_trials).astype('float32')
-  n_trials = 1
-  learning_rates = [1e-4] #[0.001, 0.0009, 0.0007, 0.0005]
-  reg_strengths = [8e-4]#10**np.random.uniform(-5,-4,n_trials).astype('float32')
-  dropout_probs = [0.4]#[0.4, 0.4, 0.4, 0.4]
+  learning_rates = learning_ratesTOP
+  reg_strengths = reg_strengthsTOP
+  dropout_probs = dropout_probsTOP
   return zip(learning_rates,reg_strengths,dropout_probs)
 
 def build_ensembles(hyperparams_list):
@@ -420,14 +423,15 @@ def build_ensembles(hyperparams_list):
       test_predictions = maker.model.predict(X_test_aug, batch_size=batch_size)
       print_accuracy(test_predictions, y_test_aug)
     else:
-      train_predictions = maker.model.predict(X_train, batch_size=batch_size) 
-      print_accuracy(train_predictions, y_train)
-      test_predictions = maker.model.predict(X_test, batch_size=batch_size)
-      print_accuracy(test_predictions, y_test)
-      np.save('artists_train_predictions.npy',train_predictions)
-      np.save('artists_test_predictions.npy'. test_predictions)
-      np.save('artists_train_answers.npy',y_train)
-      np.save('artists_test_answers.npy'. y_test)
+      test_predictions = 14
+      # train_predictions = maker.model.predict(X_train, batch_size=batch_size)
+      # print_accuracy(train_predictions, y_train)
+      # test_predictions = maker.model.predict(X_test, batch_size=batch_size)
+      # print_accuracy(test_predictions, y_test)
+      # np.save('artists_train_predictions.npy',train_predictions)
+      # np.save('artists_test_predictions.npy'. test_predictions)
+      # np.save('artists_train_answers.npy',y_train)
+      # np.save('artists_test_answers.npy'. y_test)
     # solver.plot(trial)
     ensemble_results.append(test_predictions)
 
