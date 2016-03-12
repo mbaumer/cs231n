@@ -23,7 +23,7 @@ import matplotlib
 matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
-env = 'local'
+env = 'remote'
 if env == 'local':
   # path = '/Users/mbaumer/Documents/CS231n/project/cs231n'
   path = '/Users/derekchen/Documents/conv_nets/cs231n'
@@ -31,7 +31,7 @@ if env == 'local':
   training_input = path+'/data/X.npy'
   training_output = path+'/data/Y.npy'
 elif env == 'remote':
-  path = ''
+  path = '~/results/'
   weights_path = '/data/vgg16_weights.h5'
   training_input = '/data/X_artists.npy'
   training_output = '/data/Y_artists.npy'
@@ -45,9 +45,9 @@ y_train, y_test = [np_utils.to_categorical(x) for x in (y_train, y_test)]
 
 train_level = 1
 augment = False
-learning_ratesTOP = [1e-5, 5e-6, 1e-6] #[0.001, 0.0009, 0.0007, 0.0005]
-reg_strengthsTOP = [8e-4, 8e-4, 8e-4]#10**np.random.uniform(-5,-4,n_trials).astype('float32')
-dropout_probsTOP = [0.4, 0.4, 0.4]
+learning_ratesTOP = [2e-6, 2e-6, 2e-6, 2e-6]
+reg_strengthsTOP = [8e-4, 2e-3, 8e-4, 2e-3]
+dropout_probsTOP = [0.4, 0.4, 0.5, 0.5]
 
 
 if env == 'local':
@@ -215,7 +215,8 @@ class ModelMaker(object):
     checkpoint = tm.time() - initial_time
     print 'Compiled in %s seconds' % round(checkpoint, 3)
 
-  def fit_data(self):
+  def fit_data(self, trial):
+    trl = str(trial)
     batch_history = LossHistory()
 
     if self.train_src is not None:
@@ -231,7 +232,7 @@ class ModelMaker(object):
     last_acc = epoch_history.history['val_acc'][-1]
     print 'Last validation loss for this iteration is', round(last_loss,4)
     print 'Last validation accuracy is', round(last_acc,4)
-    self.model.save_weights(path+'bestArtistWeights.h5',overwrite=True)
+    self.model.save_weights(path+'bestArtist'+trl+'Weights.h5',overwrite=True)
     self.batch_history = batch_history
     self.epoch_history = epoch_history
 
@@ -321,8 +322,7 @@ class CrossValidator(object):
     self.best_model_params = {}
 
   def plot(self, trial):
-    # trl = str(trial)
-    trl = tria
+    trl = str(trial)
 
     plt.figure()
     plt.xlabel('Batch Number')
@@ -414,7 +414,7 @@ def build_ensembles(hyperparams_list):
     maker = ModelMaker(hyperparams_list[trial],train_level,train_src=train_data,val_data=val_data)
     maker.create_model()
     maker.compile_model()
-    maker.fit_data()
+    maker.fit_data(trial)
 
     solver.update(maker,trial)
     print X_test.shape
