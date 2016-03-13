@@ -36,7 +36,7 @@ elif env == 'remote':
   training_input = '/data/X_artists.npy'
   training_output = '/data/Y_artists.npy'
 
-our_weights = 'bestArtist0Weights.h5'
+our_weights = '/home/ubuntu/cs231n/bestArtist0Weights.h5'
 
 
 X = np.load(training_input).astype('float32')
@@ -163,24 +163,24 @@ class ModelMaker(object):
     layer_dict = dict([(layer.name, layer) for layer in model.layers])
 
     # Load the weights from our dropbox folder (about 0.5 GB worth) --------------------------
-    f = h5py.File(our_weights)
-    skipped = 0
-    for k in range(f.attrs['nb_layers']):
-      if k >= len(model.layers):
-        break         # we don't look at the last (fully-connected) layers in the savefile
-      isActivation = (type(model.layers[k]) == type(Activation('relu')))
-      isBatchNorm = (type(model.layers[k]) == type(BatchNormalization()))
-      if isActivation | isBatchNorm:
-        skipped += 1
-        # print 'skipping'
-        continue #skip activation layers
-      g = f['layer_{}'.format(k-skipped)]
-      # print g.keys()
-      weights = [g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
-      # print type(model.layers[k])
-      model.layers[k].set_weights(weights)
-    f.close()
-    print('Model weights loaded.')
+    # f = h5py.File(our_weights)
+    # skipped = 0
+    # for k in range(f.attrs['nb_layers']):
+    #   if k >= len(model.layers):
+    #     break         # we don't look at the last (fully-connected) layers in the savefile
+    #   isActivation = (type(model.layers[k]) == type(Activation('relu')))
+    #   isBatchNorm = (type(model.layers[k]) == type(BatchNormalization()))
+    #   if isActivation | isBatchNorm:
+    #     skipped += 1
+    #     # print 'skipping'
+    #     continue #skip activation layers
+    #   g = f['layer_{}'.format(k-skipped)]
+    #   # print g.keys()
+    #   weights = [g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
+    #   # print type(model.layers[k])
+    #   model.layers[k].set_weights(weights)
+    # f.close()
+
 
     model.add(Flatten())
     # Note: Keras does automatic shape inference.
@@ -208,6 +208,10 @@ class ModelMaker(object):
 
     model.add(Dense(classes))
     model.add(Activation('softmax'))
+
+    model.load_weights(our_weights)
+    print('Model weights loaded.')
+
     self.model = model
 
   def compile_model(self):
