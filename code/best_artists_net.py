@@ -329,26 +329,26 @@ class CrossValidator(object):
     plt.ylabel('Training Loss')
     for history in self.batch_histories:
       plt.plot(history)
-    plt.savefig('train_loss_'+trl+'.png')
+    plt.savefig(path+'train_loss_'+trl+'.png')
 
     plt.figure()
     plt.xlabel('Epoch Number')
     plt.ylabel('Validation Loss')
     for history in self.epoch_histories:
       plt.plot(history)
-    plt.savefig('val_loss_'+trl+'.png')
+    plt.savefig(path+'val_loss_'+trl+'.png')
 
     plt.figure()
     plt.xlabel('Epoch Number')
     plt.ylabel('Validation Accuracy')
     for history in self.epoch_acc_histories:
       plt.plot(history)
-    plt.savefig('val_accuracy_'+trl+'.png')
+    plt.savefig(path+'val_accuracy_'+trl+'.png')
 
     history_dict = {'batch_histories': self.batch_histories,
       'epoch_histories': self.epoch_histories,
       'epoch_acc_histories': self.epoch_acc_histories}
-    pickle.dump(history_dict,open('history_dict'+trl+'.out','wb'))
+    pickle.dump(history_dict,open(path+'history_dict'+trl+'.out','wb'))
 
   def update(self,maker,iteration):
     if iteration == 0:
