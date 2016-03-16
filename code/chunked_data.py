@@ -19,8 +19,9 @@ from sklearn.cross_validation import train_test_split
 from sklearn.utils import shuffle
 from keras.utils import np_utils, generic_utils
 
-path = '/Users/derekchen/Documents/conv_nets/cs231n'
-# path = ''
+env = 'part'
+# path = '/Users/derekchen/Documents/conv_nets/cs231n'
+path = ''
 weights_path = path+'/data/vgg16_weights.h5'
 classes = 20
 n_trials, chunks = 2, 10
@@ -118,19 +119,20 @@ class ModelMaker(object):
     model.add(Activation('relu',name='relu_3'))
     model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, name='conv5_1'))
-    # if train_level == 1: model.add(BatchNormalization())
-    model.add(Activation('relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, name='conv5_2'))
-    # if train_level == 1: model.add(BatchNormalization())
-    model.add(Activation('relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, name='conv5_3'))
-    # if train_level == 1: model.add(BatchNormalization())
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+    if env == 'full':
+      model.add(ZeroPadding2D((1, 1)))
+      model.add(Convolution2D(512, 3, 3, name='conv5_1'))
+      # if train_level == 1: model.add(BatchNormalization())
+      model.add(Activation('relu'))
+      model.add(ZeroPadding2D((1, 1)))
+      model.add(Convolution2D(512, 3, 3, name='conv5_2'))
+      # if train_level == 1: model.add(BatchNormalization())
+      model.add(Activation('relu'))
+      model.add(ZeroPadding2D((1, 1)))
+      model.add(Convolution2D(512, 3, 3, name='conv5_3'))
+      # if train_level == 1: model.add(BatchNormalization())
+      model.add(Activation('relu'))
+      model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
     # get the symbolic outputs of each "key" layer (we gave them unique names).
     layer_dict = dict([(layer.name, layer) for layer in model.layers])
@@ -157,25 +159,26 @@ class ModelMaker(object):
 
     model.add(Flatten())
 
-    model.add(Dense(256,name='dense_1',init='he_normal',W_regularizer=l2(self.reg_strength)))
-    model.add(Activation('relu'))
-    model.add(Dropout(self.dropout_prob,name='dropout_1'))
+    if env == 'part':
+      model.add(Dense(256,name='dense_1',init='he_normal',W_regularizer=l2(self.reg_strength)))
+      model.add(Activation('relu'))
+      model.add(Dropout(self.dropout_prob,name='dropout_1'))
 
-    # if env == 'remote':
-    #   model.add(Dense(4096,name='dense_1',init='he_normal',W_regularizer=l2(self.reg_strength)))
-    #   model.add(BatchNormalization())
-    #   model.add(Activation('relu'))
-    #   model.add(Dropout(self.dropout_prob,name='dropout_1'))
+    if env == 'full':
+      model.add(Dense(4096,name='dense_1',init='he_normal',W_regularizer=l2(self.reg_strength)))
+      model.add(BatchNormalization())
+      model.add(Activation('relu'))
+      model.add(Dropout(self.dropout_prob,name='dropout_1'))
 
-    #   model.add(Dense(4096,name='dense_2',init='he_normal',W_regularizer=l2(self.reg_strength)))
-    #   model.add(BatchNormalization())
-    #   model.add(Activation('relu'))
-    #   model.add(Dropout(self.dropout_prob,name='dropout_2'))
+      model.add(Dense(4096,name='dense_2',init='he_normal',W_regularizer=l2(self.reg_strength)))
+      model.add(BatchNormalization())
+      model.add(Activation('relu'))
+      model.add(Dropout(self.dropout_prob,name='dropout_2'))
 
-    #   model.add(Dense(1000,name='dense_3',init='he_normal',W_regularizer=l2(self.reg_strength)))
-    #   model.add(BatchNormalization())
-    #   model.add(Activation('relu'))
-    #   model.add(Dropout(self.dropout_prob,name='dropout_3'))
+      model.add(Dense(1000,name='dense_3',init='he_normal',W_regularizer=l2(self.reg_strength)))
+      model.add(BatchNormalization())
+      model.add(Activation('relu'))
+      model.add(Dropout(self.dropout_prob,name='dropout_3'))
 
     model.add(Dense(classes))
     model.add(Activation('softmax'))
@@ -190,11 +193,9 @@ class ModelMaker(object):
 
   def fit_data(self):
     # batch_history = LossHistory()
-
     for e in range(epoch_count):
-      print("Epoch %d" % e)
+      print(">>> Epoch %d" % e)
       # epoch_history = None
-
       for j in xrange(chunks):
         jstr = str(j+1)
         fp = path+'/data/chunks/'
@@ -209,26 +210,26 @@ class ModelMaker(object):
           print X_train.shape
           print y_train.shape
         epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
-          batch_size=batch_size, verbose=1, show_accuracy=True, validation_split=0.2)
-          # callbacks=[batch_history],
-
+          batch_size=batch_size, verbose=1, show_accuracy=True,
+          validation_split=0.2) # callbacks=[batch_history]
     #   last_loss = epoch_history.history['val_loss'][-1]
     #   last_acc = epoch_history.history['val_acc'][-1]
-
-    # print 'Last validation loss for this iteration is', round(last_loss,4)
-    # print 'Last validation accuracy is', round(last_acc,4)
     # self.batch_history = batch_history
     # self.epoch_history = epoch_history
-
-  def predict_test(self):
-    return 17
 
 def make_predictions(hyperparams):
   maker = ModelMaker(hyperparams)
   maker.create_model()
   maker.compile_model()
   maker.fit_data()
-  predictions = maker.predict_test()
+
+  X_eleven = np.load(path+'/data/chunks/aX_chunk11of12.npy')
+  X_twelve = np.load(path+'/data/chunks/aX_chunk12of12.npy')
+  print "Predicting now ..."
+  eleven_preds = maker.model.predict(X_eleven, batch_size=batch_size)
+  twelve_preds = maker.model.predict(X_twelve, batch_size=batch_size)
+  predictions = np.concatenate((eleven_preds, twelve_preds))
+  print predictions.shape
   return predictions
 
 def display_results(final_predictions):
