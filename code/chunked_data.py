@@ -24,7 +24,7 @@ env = 'part'
 path = ''
 weights_path = path+'/data/vgg16_weights.h5'
 classes = 20
-n_trials, chunks = 2, 10
+n_trials, chunks = 2, 4
 epoch_count = 3
 img_width, img_height = 224, 224
 batch_size = 25
@@ -194,7 +194,7 @@ class ModelMaker(object):
   def fit_data(self):
     # batch_history = LossHistory()
     for e in range(epoch_count):
-      print(">>> Epoch %d" % e)
+      print '>>> Epoch ', e+1
       # epoch_history = None
       for j in xrange(chunks):
         jstr = str(j+1)
@@ -240,7 +240,7 @@ def display_results(final_predictions):
 
   y_hat = np.argmax(final_predictions,axis=1)
   acc = np.sum(y_hat == y_test)
-  print 'Final accuracy is', round(score, 3)
+  print 'Final accuracy is', round(acc, 3)
 
 hyperparams_list = generate_hyperparams(n_trials)
 for trial in range(n_trials):
