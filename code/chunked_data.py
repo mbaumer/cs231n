@@ -19,13 +19,13 @@ from sklearn.cross_validation import train_test_split
 from sklearn.utils import shuffle
 from keras.utils import np_utils, generic_utils
 
-env = 'part'
+env = 'full'
 # path = '/Users/derekchen/Documents/conv_nets/cs231n'
 path = ''
 weights_path = path+'/data/vgg16_weights.h5'
 classes = 20
-n_trials, chunks = 2, 4
-epoch_count = 3
+n_trials, chunks = 2, 10
+epoch_count = 10
 img_width, img_height = 224, 224
 batch_size = 25
 
