@@ -20,6 +20,7 @@ from sklearn.utils import shuffle
 from keras.utils import np_utils, generic_utils
 
 path = '/Users/derekchen/Documents/conv_nets/cs231n'
+# path = ''
 weights_path = path+'/data/vgg16_weights.h5'
 classes = 20
 n_trials, chunks = 2, 10
@@ -231,15 +232,18 @@ def make_predictions(hyperparams):
   return predictions
 
 def display_results(final_predictions):
-  # y_hat = np.argmax(final_predictions,axis=1)
-  # y_actual = np.argmax(y_test,axis=1)
-  # acc = np.sum(y_hat == y_actual)
-  # print 'Final accuracy is', acc/X_test.shape[0]
-  print 'Final accuracy is', final_predictions
+  pre = np.load(path+'/data/chunks/ay_chunk11of12.npy')
+  post = np.load(path+'/data/chunks/ay_chunk12of12.npy')
+  y_test = np.concatenate((pre,post))
+  test_len = len(y_test)
+
+  y_hat = np.argmax(final_predictions,axis=1)
+  acc = np.sum(y_hat == y_test)
+  print 'Final accuracy is', round(score, 3)
 
 hyperparams_list = generate_hyperparams(n_trials)
 for trial in range(n_trials):
   print '\n ------------- RUNNING CROSS VALIDATION TRIAL', trial+1, '-------------'
   predictions = make_predictions(hyperparams_list[trial])
   display_results(predictions)
-print "Scale Net is done."
+print "\n Scale Net is done."
