@@ -24,8 +24,8 @@ env = 'full'
 path = ''
 weights_path = path+'/data/vgg16_weights.h5'
 classes = 20
-n_trials, chunks = 2, 10
-epoch_count = 10
+n_trials, chunks = 2, 4
+epoch_count = 3
 img_width, img_height = 224, 224
 batch_size = 25
 
@@ -199,16 +199,15 @@ class ModelMaker(object):
       for j in xrange(chunks):
         jstr = str(j+1)
         fp = path+'/data/chunks/'
+        print 'Loading Chunk '+jstr
+
         X = np.load(fp+'aX_chunk'+jstr+'of12.npy')
         y = np.load(fp+'ay_chunk'+jstr+'of12.npy')
+        print "finished loading chunks"
 
         X_train = X - np.mean(X,axis=0)
         y_train = np_utils.to_categorical(y)
 
-        print 'Chunk '+jstr
-        if j == 9:
-          print X_train.shape
-          print y_train.shape
         epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
           batch_size=batch_size, verbose=1, show_accuracy=True,
           validation_split=0.2) # callbacks=[batch_history]
