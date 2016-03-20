@@ -24,10 +24,10 @@ env = 'full'
 path = ''
 weights_path = path+'/data/vgg16_weights.h5'
 classes = 20
-n_trials, chunks = 2, 4
-epoch_count = 4
+n_trials, chunks = 2, 10
+epoch_count = 10
 img_width, img_height = 224, 224
-batch_size = 10
+batch_size = 18
 
 def generate_hyperparams(n_trials):
   learning_rates = [2e-5, 7e-5]
@@ -206,32 +206,32 @@ class ModelMaker(object):
         print "finished loading chunks"
 
 
-        print X.shape
-        print y.shape
+        # print X.shape
+        # print y.shape
         X_train, y_train = self.preprocess_data(X, y)
-        print X_train.shape
-        print X[3, 2, :4,:4]
-        print X_train[3, 2, :4,:4]
-        print X_train[503, 2, :4,220:]
-        print y_train.shape
-        print "About to drop"
+        # print X_train.shape
+        # print X[3, 2, :4,:4]
+        # print X_train[3, 2, :4,:4]
+        # print X_train[503, 2, :4,220:]
+        # print y_train.shape
+        # print "About to drop"
 
-        tm.sleep(27)
+        # tm.sleep(27)
         X = None
         y = None
-        print "Finised dropping"
-        tm.sleep(27)
+        # print "Finised dropping"
+        # tm.sleep(27)
 
         epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
           batch_size=batch_size, verbose=1, show_accuracy=True,
           validation_split=0.2) # callbacks=[batch_history]
-        print "before emptying"
-        tm.sleep(7)
+        # print "before emptying"
+        # tm.sleep(7)
 
         X_train = None
         y_train = None
 
-        print "after emptying"
+        # print "after emptying"
 
     #   last_loss = epoch_history.history['val_loss'][-1]
     #   last_acc = epoch_history.history['val_acc'][-1]
@@ -239,7 +239,7 @@ class ModelMaker(object):
     # self.epoch_history = epoch_history
 
   def preprocess_data(self, X, y):
-    print "Im inside"
+    # print "Im inside"
     X -= np.mean(X,axis=0)
     X_flip = np.zeros(X.shape)
     for i in xrange(X.shape[0]):
@@ -247,12 +247,12 @@ class ModelMaker(object):
         X_flip[i][j] = np.fliplr(X[i][j])
     X = np.concatenate((X, X_flip))
 
-    tm.sleep(7)
+    # tm.sleep(7)
 
     y = np.concatenate((y,y))
     y = np_utils.to_categorical(y)
 
-    print "Im leaving"
+    # print "Im leaving"
     return X, y
 
 def make_predictions(hyperparams):
