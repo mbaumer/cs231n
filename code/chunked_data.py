@@ -25,7 +25,7 @@ path = ''
 weights_path = path+'/data/vgg16_weights.h5'
 classes = 20
 n_trials, chunks = 2, 4
-epoch_count = 3
+epoch_count = 4
 img_width, img_height = 224, 224
 batch_size = 25
 
@@ -205,8 +205,15 @@ class ModelMaker(object):
         y = np.load(fp+'ay_chunk'+jstr+'of12.npy')
         print "finished loading chunks"
 
-        X_train = X - np.mean(X,axis=0)
-        y_train = np_utils.to_categorical(y)
+        print "Before processing data"
+        print X.shape
+        print X[3, :, :4,:4]
+        print y.shape
+        X_train, y_train = self.preprocess_data(X, y)
+        print X_train.shape
+        print X[3, :, :4,:4]
+        print X[503, :, :4,:4]
+        print y_train.shape
 
         epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
           batch_size=batch_size, verbose=1, show_accuracy=True,
@@ -216,14 +223,27 @@ class ModelMaker(object):
     # self.batch_history = batch_history
     # self.epoch_history = epoch_history
 
+  def preprocess_data(self, X, y):
+    X -= np.mean(X,axis=0)
+    X_flip = np.zeros(X.shape)
+    for i in xrange(X.shape[0]):
+      for j in xrange(X.shape[1]):
+        X_flip[i][j] = np.fliplr(X[i][j])
+    X_train = np.concatenate(X, X_flip)
+
+    y_train = np.concatenate(y,y)
+    y_train = np_utils.to_categorical(y_train)
+
+    return X_train, y_train
+
 def make_predictions(hyperparams):
   maker = ModelMaker(hyperparams)
   maker.create_model()
   maker.compile_model()
   maker.fit_data()
 
-  X_eleven = np.load(path+'/data/chunks/aX_chunk11of12.npy')
-  X_twelve = np.load(path+'/data/chunks/aX_chunk12of12.npy')
+  X_eleven = np.load(path+'/data/chunks/aX_chunk11of12.npy').astype('float32')
+  X_twelve = np.load(path+'/data/chunks/aX_chunk12of12.npy').astype('float32')
   print "Predicting now ..."
   eleven_preds = maker.model.predict(X_eleven, batch_size=batch_size)
   twelve_preds = maker.model.predict(X_twelve, batch_size=batch_size)
