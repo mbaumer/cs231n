@@ -207,34 +207,49 @@ class ModelMaker(object):
 
         print "Before processing data"
         print X.shape
-        print X[3, :, :4,:4]
         print y.shape
         X_train, y_train = self.preprocess_data(X, y)
         print X_train.shape
-        print X[3, :, :4,:4]
-        print X[503, :, :4,:4]
+        print X[3, 2, :4,:4]
+        print X_train[3, 2, :4,:4]
+        print X_train[503, 2, :4,220:]
         print y_train.shape
+
 
         epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
           batch_size=batch_size, verbose=1, show_accuracy=True,
           validation_split=0.2) # callbacks=[batch_history]
+        print "before emptying"
+        tm.sleep(7)
+
+        X = None
+        y = None
+        X_train = None
+        y_train = None
+
+        print "after emptying"
+
     #   last_loss = epoch_history.history['val_loss'][-1]
     #   last_acc = epoch_history.history['val_acc'][-1]
     # self.batch_history = batch_history
     # self.epoch_history = epoch_history
 
   def preprocess_data(self, X, y):
+    print "Im inside"
     X -= np.mean(X,axis=0)
     X_flip = np.zeros(X.shape)
     for i in xrange(X.shape[0]):
       for j in xrange(X.shape[1]):
         X_flip[i][j] = np.fliplr(X[i][j])
-    X_train = np.concatenate((X, X_flip))
+    X = np.concatenate((X, X_flip))
 
-    y_train = np.concatenate((y,y))
-    y_train = np_utils.to_categorical(y_train)
+    tm.sleep(7)
 
-    return X_train, y_train
+    y = np.concatenate((y,y))
+    y = np_utils.to_categorical(y)
+
+    print "Im leaving"
+    return X, y
 
 def make_predictions(hyperparams):
   maker = ModelMaker(hyperparams)
