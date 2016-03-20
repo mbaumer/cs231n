@@ -229,9 +229,9 @@ class ModelMaker(object):
     for i in xrange(X.shape[0]):
       for j in xrange(X.shape[1]):
         X_flip[i][j] = np.fliplr(X[i][j])
-    X_train = np.concatenate(X, X_flip)
+    X_train = np.concatenate((X, X_flip))
 
-    y_train = np.concatenate(y,y)
+    y_train = np.concatenate((y,y))
     y_train = np_utils.to_categorical(y_train)
 
     return X_train, y_train
