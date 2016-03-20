@@ -27,7 +27,7 @@ classes = 20
 n_trials, chunks = 2, 4
 epoch_count = 4
 img_width, img_height = 224, 224
-batch_size = 25
+batch_size = 10
 
 def generate_hyperparams(n_trials):
   learning_rates = [2e-5, 7e-5]
@@ -214,9 +214,13 @@ class ModelMaker(object):
         print X_train[3, 2, :4,:4]
         print X_train[503, 2, :4,220:]
         print y_train.shape
-        print "Before training data"
+        print "About to drop"
 
-        tm.sleep(7)
+        tm.sleep(27)
+        X = None
+        y = None
+        print "Finised dropping"
+        tm.sleep(27)
 
         epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
           batch_size=batch_size, verbose=1, show_accuracy=True,
@@ -224,8 +228,6 @@ class ModelMaker(object):
         print "before emptying"
         tm.sleep(7)
 
-        X = None
-        y = None
         X_train = None
         y_train = None
 
