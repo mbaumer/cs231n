@@ -205,7 +205,7 @@ class ModelMaker(object):
         y = np.load(fp+'ay_chunk'+jstr+'of12.npy')
         print "finished loading chunks"
 
-        print "Before processing data"
+
         print X.shape
         print y.shape
         X_train, y_train = self.preprocess_data(X, y)
@@ -214,7 +214,9 @@ class ModelMaker(object):
         print X_train[3, 2, :4,:4]
         print X_train[503, 2, :4,220:]
         print y_train.shape
+        print "Before training data"
 
+        tm.sleep(7)
 
         epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
           batch_size=batch_size, verbose=1, show_accuracy=True,
