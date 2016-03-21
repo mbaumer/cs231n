@@ -203,35 +203,16 @@ class ModelMaker(object):
 
         X = np.load(fp+'aX_chunk'+jstr+'of12.npy')
         y = np.load(fp+'ay_chunk'+jstr+'of12.npy')
-        print "finished loading chunks"
-
-
-        # print X.shape
-        # print y.shape
         X_train, y_train = self.preprocess_data(X, y)
-        # print X_train.shape
-        # print X[3, 2, :4,:4]
-        # print X_train[3, 2, :4,:4]
-        # print X_train[503, 2, :4,220:]
-        # print y_train.shape
-        # print "About to drop"
-
-        # tm.sleep(27)
         X = None
         y = None
-        # print "Finised dropping"
-        # tm.sleep(27)
 
         epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
           batch_size=batch_size, verbose=1, show_accuracy=True,
           validation_split=0.2) # callbacks=[batch_history]
-        # print "before emptying"
-        # tm.sleep(7)
 
         X_train = None
         y_train = None
-
-        # print "after emptying"
 
     #   last_loss = epoch_history.history['val_loss'][-1]
     #   last_acc = epoch_history.history['val_acc'][-1]
@@ -278,7 +259,7 @@ def display_results(final_predictions):
 
   y_hat = np.argmax(final_predictions,axis=1)
   acc = np.sum(y_hat == y_test)
-  print 'Final accuracy is', round(acc, 3)
+  print 'Final accuracy is', round(acc/test_len, 3)
 
 hyperparams_list = generate_hyperparams(n_trials)
 for trial in range(n_trials):
