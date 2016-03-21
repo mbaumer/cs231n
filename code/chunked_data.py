@@ -203,16 +203,13 @@ class ModelMaker(object):
 
         X = np.load(fp+'aX_chunk'+jstr+'of12.npy')
         y = np.load(fp+'ay_chunk'+jstr+'of12.npy')
-        X_train, y_train = self.preprocess_data(X, y)
+        X, y = self.preprocess_data(X, y)
+        print "Fitting data"
+        epoch_history = self.model.fit(X, y, nb_epoch=1,
+          batch_size=batch_size, show_accuracy=True, validation_split=0.2)
+           # verbose=1, callbacks=[batch_history]
         X = None
         y = None
-
-        epoch_history = self.model.fit(X_train, y_train, nb_epoch=1,
-          batch_size=batch_size, verbose=1, show_accuracy=True,
-          validation_split=0.2) # callbacks=[batch_history]
-
-        X_train = None
-        y_train = None
 
     #   last_loss = epoch_history.history['val_loss'][-1]
     #   last_acc = epoch_history.history['val_acc'][-1]
@@ -220,20 +217,17 @@ class ModelMaker(object):
     # self.epoch_history = epoch_history
 
   def preprocess_data(self, X, y):
-    # print "Im inside"
+    print "preprocessing data"
     X -= np.mean(X,axis=0)
     X_flip = np.zeros(X.shape)
     for i in xrange(X.shape[0]):
       for j in xrange(X.shape[1]):
         X_flip[i][j] = np.fliplr(X[i][j])
     X = np.concatenate((X, X_flip))
-
-    # tm.sleep(7)
-
     y = np.concatenate((y,y))
     y = np_utils.to_categorical(y)
 
-    # print "Im leaving"
+    X, y = shuffle(X, y, random_state=14)
     return X, y
 
 def make_predictions(hyperparams):
